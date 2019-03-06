@@ -17,6 +17,8 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.GPXUtil.GPXParsing_Edge;
+import com.graphhopper.GPXUtil.PointListCustom;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
@@ -118,7 +120,8 @@ public class GraphHopper implements GraphHopperAPI {
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
-    private PointList pointList = new PointList();
+    private PointListCustom pointList = new PointListCustom();
+
 
     private int point_count=0;
 
@@ -1285,27 +1288,29 @@ public class GraphHopper implements GraphHopperAPI {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
 
-    public ArrayList<String> GPX_Point_record(GHPoint point){
+    public ArrayList<String> GPX_Point_record(GHPoint point,String acc, String time){
 
         ArrayList<String>  GPX_Point_Array = new ArrayList<String>();
         String swlang;
+        PointListCustom plc_input = new PointListCustom();
+        GPXParsing_Edge gpxParsing_edge = new GPXParsing_Edge();
 
-        pointList.add(point);
+        pointList.add(point,Double.parseDouble(acc),time);
+        plc_input = gpxParsing_edge.ParseMatchingEdge(locationIndex,pointList);
 
-        System.out.println(pointList.size());
+        //System.out.println(pointList.size());
 
         for(int k=0;k<pointList.size();k++){
             GHPoint GPX_point = pointList.toGHPoint(k);
             swlang = GPX_point.getLon() + "," +GPX_point.getLat();
             GPX_Point_Array.add(swlang);
-            System.out.println(GPX_Point_Array);
         }
 
-        return GPX_Point_Array;
-    }
+        System.out.println("GPX Node:"+pointList);
+        System.out.println("Closest Node: "+plc_input);
+        gpxParsing_edge.getEdgeID();
 
-    public PointList getPoint(){
-     return pointList;
+        return GPX_Point_Array;
     }
 
     public GHResponse calcPath(final double fromLat, final double fromLon,

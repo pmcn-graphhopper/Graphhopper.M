@@ -18,6 +18,7 @@ require('./lib/jquery.autocomplete.js');
 var ghenv = require("./config/options.js").options;
 console.log(ghenv.environment);
 
+var GHLocation = require('./graphhopper/GHLocation.js');
 var GHCustom = require('./graphhopper/GHCustom.js');
 var GHInput = require('./graphhopper/GHInput.js');
 var GHRequest = require('./graphhopper/GHRequest.js');
@@ -54,10 +55,17 @@ var bounds = {};
 
 var metaVersionInfo;
 
-var path_point = new Array();
-var path_snapped_waypoints = new Array();
+var path_point = [];
+var path_snapped_waypoints = [];
 var count =0;
 
+var locationGet = true;
+var locationStop = false;
+var HomeCoordObject;
+
+var GHloc = new GHLocation();
+
+//var IntervalLocation;
 
 // usage: log('inside coolFunc',this,arguments);
 // http://paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
@@ -102,8 +110,9 @@ $(document).ready(function (e) {
     $("#gpx_test").click(function(){testGPX();});
     $("#draw_line").click(function(){drawLine();});
     $("#clear_route").click(function(){ClearLayer();});
-    $("#routing").click(function(){routing();});
-    $("#getLocation").click(function(){getLocation();});
+    $("#routing").click(function(){RoutingLocation();});
+    $("#getLocation").click(function(){Location(locationGet)});
+    $("#stopLocation").click(function(){Location(locationStop)});
 
     var urlParams = urlTools.parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -175,7 +184,7 @@ $(document).ready(function (e) {
                 }
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
 
-                mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
+                mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, setHomeCoord, urlParams.layer, urlParams.use_miles);
 
                 // execute query
                 initFromParams(urlParams, true);
@@ -192,7 +201,7 @@ $(document).ready(function (e) {
                     "maxLat": 90
                 };
                 nominatim.setBounds(bounds);
-                mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
+                mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, setHomeCoord, urlParams.layer, urlParams.use_miles);
             });
 
     var language_code = urlParams.locale && urlParams.locale.split('-', 1)[0];
@@ -400,6 +409,7 @@ function setIntermediateCoord(e) {
     ghRequest.route.add(e.latlng.wrap(), index);
     resolveIndex(index);
     routeIfAllResolved();
+    routeIfAllResolved();
 }
 
 function deleteCoord(e) {
@@ -414,6 +424,18 @@ function setEndCoord(e) {
     ghRequest.route.set(e.latlng.wrap(), index);
     resolveTo();
     routeIfAllResolved();
+}
+
+function setHomeCoord(e) {
+    HomeCoordObject = e.latlng.wrap();
+
+    var GPXc = new GHCustom();
+
+    GPXc.SetHomeNode(HomeCoordObject.lat,HomeCoordObject.lng);
+    GPXc.doRequest(GPXc.GPXurl, function (json) {
+        mapLayer.createMarkerHome(HomeCoordObject.lat,HomeCoordObject.lng);
+    });
+
 }
 
 function routeIfAllResolved(doQuery) {
@@ -802,7 +824,7 @@ function testGPX(){
     var gpx_lon_input = document.getElementById('gpxlon');
     var gpx_lon = gpx_lon_input.value;
 
-    var latlonArray = new Array();
+    var latlonArray = [];
 
     var GPXc = new GHCustom();
 
@@ -819,7 +841,7 @@ function testGPX(){
 
         path_point.push(latlonArray);
 
-        if(count == 0 && count == 1)
+        if(count == 0 || count == 1)
             path_snapped_waypoints.push(latlonArray);
 
         if(count > 1)
@@ -828,8 +850,6 @@ function testGPX(){
             path_snapped_waypoints.push(latlonArray);
         }
         count++;
-
-        console.log(path_snapped_waypoints);
 
         //for(var j=0 ; j < GPX_Point.length; j++){
         //    latlonArray = GPX_Point[j].split(',');
@@ -852,7 +872,7 @@ function drawLine(){
         "properties": {
             "style": defaultRouteStyle,
             name: "route",
-            //snapped_waypoints: path_snapped_waypoints
+            snapped_waypoints: path_snapped_waypoints
         }
     };
 
@@ -862,26 +882,49 @@ function drawLine(){
 
 }
 
-function ClearLayer(){
+function ClearLayer() {
     mapLayer.clearLayers();
 }
 
-function routing(){
+function routing(routingFromLat,routingFromLon){
 
     var pathindex = 0;
     var GPXc = new GHCustom();
 
-    GPXc.route(0,0);
+    GPXc.route(routingFromLat,routingFromLon,HomeCoordObject.lat,HomeCoordObject.lng);
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log("this is json");
         console.log(json);
 
         var path = json.paths[pathindex];
         path_point = path.points.coordinates;
+        path_snapped_waypoints = path.snapped_waypoints.coordinates;
+        mapLayer.createMarkerGPX(path_snapped_waypoints[0][1],path_snapped_waypoints[0][0]);
         drawLine();
+
+        var firstPath = json.paths[pathindex];
+        if (firstPath.bbox) {
+            var minLon = firstPath.bbox[0];
+            var minLat = firstPath.bbox[1];
+            var maxLon = firstPath.bbox[2];
+            var maxLat = firstPath.bbox[3];
+            var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
+            mapLayer.fitMapToBounds(tmpB);
+        }
+
     });
 
     console.log(GPXc.GPXurl);
+}
+
+function Location(boolean) {
+
+    if(boolean === true)
+        window.IntervalLocation = setInterval(getLocation,12000);
+    if(boolean === false)
+        clearInterval(window.IntervalLocation);
+
+    console.log(IntervalLocation);
 }
 
 function getLocation() {
@@ -898,6 +941,7 @@ function getLocation() {
 function showPosition(position) {
 	
 	var x = document.getElementById("gps_Location");
+    var latlonArray = [];
 
 	var timestamp = new Date(position.timestamp);
 
@@ -908,6 +952,32 @@ function showPosition(position) {
         "<br>Longitude: " + position.coords.longitude +
         "<br>Accuracy: "+ position.coords.accuracy +
         "<br>Time:" + time ;
+
+    var GPXc = new GHCustom();
+    GPXc.createGPXNode(position.coords.latitude,position.coords.longitude,position.coords.accuracy,time)
+    GPXc.doRequest(GPXc.GPXurl, function (json) {
+        console.log("this is json");
+        console.log(json);
+
+        var GPX_Point =json.GPX_Point;
+
+        latlonArray = GPX_Point[count].split(',');
+        mapLayer.createMarkerGPX(latlonArray[1],latlonArray[0]);
+
+        path_point.push(latlonArray);
+
+        if(count == 0 && count == 1)
+            path_snapped_waypoints.push(latlonArray);
+
+        if(count > 1)
+        {
+            path_snapped_waypoints.pop();
+            path_snapped_waypoints.push(latlonArray);
+        }
+        count++;
+    });
+
+    console.log(GPXc.GPXurl);
 }
 
 function showError(error) {
@@ -930,4 +1000,37 @@ function showError(error) {
     }
 }
 
+function sleep(sec){
+    var time = new Date().getTime();
+    while (new Date().getTime() - time < sec * 1000);
+}
+
+function RoutingLocation() {
+
+    var x = document.getElementById("gps_Location");
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showRoutingPosition, showError);
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+
+
+function showRoutingPosition(position) {
+
+    var x = document.getElementById("gps_Location");
+
+    var timestamp = new Date(position.timestamp);
+
+    var time = timestamp.getFullYear() + "-" + (timestamp.getMonth() + 1) + "-" + timestamp.getDate() + " "
+        + timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds();
+
+    x.innerHTML = "Latitude:" + position.coords.latitude +
+        "<br>Longitude: " + position.coords.longitude +
+        "<br>Accuracy: " + position.coords.accuracy +
+        "<br>Time:" + time;
+
+    routing(position.coords.latitude,position.coords.longitude)
+}
 module.exports.setFlag = setFlag;

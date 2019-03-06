@@ -30,6 +30,8 @@ public class GPXResource {
     private GraphHopper graphHopper;
 
     private ArrayList<String> GPX_Point_Array;
+    private double fromlat,fromlon;
+    private double tolat,tolon;
 
     @Inject
     public GPXResource (GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
@@ -40,18 +42,42 @@ public class GPXResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON,MediaType.TEXT_PLAIN})
     public Response doGet(
-            @QueryParam("point") GHPoint gpxPoints,
+            @QueryParam("point") List<GHPoint> gpxPoints,
+            @QueryParam("setHome") @DefaultValue("f") String strhome,
+            @QueryParam("accuracy")  @DefaultValue("0.0")  String acc,
+            @QueryParam("time")  @DefaultValue(" ")  String time,
             @QueryParam("routing") @DefaultValue("f") String route){
 
         if (route.equalsIgnoreCase("t"))
         {
-            ghResponse = graphHopper.calcPath(23.001710000000003, 120.19561000000002,22.975540000000002, 120.21923000000001);
+            GHPoint fromPoint = gpxPoints.get(0);
+            fromlat = fromPoint.getLat();
+            fromlon = fromPoint.getLon();
+
+            GHPoint toPoint = gpxPoints.get(1);
+            tolat = toPoint.getLat();
+            tolon = toPoint.getLon();
+
+            System.out.println("from coordinate: "+ fromlat +','+ fromlon);
+            System.out.println("to coordinate: "+ tolat +','+ tolon);
+
+            ghResponse = graphHopper.calcPath(fromlat, fromlon,tolat, tolon);
 
             return Response.ok(WebHopper.RouteJsonObject(ghResponse)).build();
+
+        } else if(strhome.equalsIgnoreCase("t")){
+
+            GHPoint HomePoint = gpxPoints.get(0);
+            tolat = HomePoint.getLat();
+            tolon = HomePoint.getLon();
+            System.out.println(tolat +","+tolon);
+
+            return Response.ok(WebHopper.GResponse()).build();
         }
         else {
 
-            GPX_Point_Array = graphHopper.GPX_Point_record(gpxPoints);
+            GHPoint GpxPoint = gpxPoints.get(0);
+            GPX_Point_Array = graphHopper.GPX_Point_record(GpxPoint,acc,time);
 
             return Response.ok(WebHopper.JsonObject(GPX_Point_Array)).build();
         }

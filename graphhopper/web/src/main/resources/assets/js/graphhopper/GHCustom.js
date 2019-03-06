@@ -12,8 +12,16 @@ GHCustom.prototype.createGPXURL = function(lat,lon){
    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon ;
 };
 
-GHCustom.prototype.route = function(lat,lon){
-    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&routing=t";
+GHCustom.prototype.route = function(fromlat,fromlon,tolat,tolon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + fromlat + "%2C" +fromlon + "&point=" + tolat + "%2C" + tolon + "&routing=t";
+}
+
+GHCustom.prototype.createGPXNode = function(lat,lon,acc,time){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&accuracy=" + acc +"&time=" +time ;
+};
+
+GHCustom.prototype.SetHomeNode = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&setHome=t";
 }
 
 GHCustom.prototype.hasElevation = function () {
@@ -39,6 +47,12 @@ GHCustom.prototype.doRequest = function (url ,callback) {
                     path.points = {
                         "type": "LineString",
                         "coordinates": tmpArray
+                    };
+
+                    var tmpSnappedArray = graphhopperTools.decodePath(path.snapped_waypoints, that.hasElevation());
+                    path.snapped_waypoints = {
+                        "type": "MultiPoint",
+                        "coordinates": tmpSnappedArray
                     };
                 }
 

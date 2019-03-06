@@ -87,7 +87,19 @@ public class WebHopper {
             jsonPath.put("weight", Helper.round6(ar.getRouteWeight()));
             jsonPath.put("time", ar.getTime());
             jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(ar.getPoints(), enableElevation) : ar.getPoints().toLineString(enableElevation));
+            jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? encodePolyline(ar.getWaypoints(), enableElevation) : ar.getWaypoints().toLineString(enableElevation));
+            if (ar.getPoints().getSize() >= 2) {
+                jsonPath.putPOJO("bbox", ar.calcBBox2D());
+            }
         }
+
+        return json;
+    }
+
+    public static ObjectNode GResponse(){
+
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.put("message","success");
 
         return json;
     }
