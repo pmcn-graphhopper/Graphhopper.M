@@ -1,4 +1,6 @@
 
+var mainTemplate = require('../main-template.js');
+
 var GHLocation = function () {
     this.location_lat = null;
     this.location_lon = null;
@@ -7,7 +9,6 @@ var GHLocation = function () {
 function showPosition(position) {
 
     var x = document.getElementById("gps_Location");
-
     var timestamp = new Date(position.timestamp);
 
     var time = timestamp.getFullYear()+"-"+ (timestamp.getMonth()+1)+"-"+timestamp.getDate()+" "
@@ -18,8 +19,7 @@ function showPosition(position) {
         "<br>Accuracy: "+ position.coords.accuracy +
         "<br>Time:" + time ;
 
-    this.location_lat = position.coords.latitude;
-    this.location_lon = position.coords.longitude;
+    mainTemplate.routing(position.coords.latitude,position.coords.longitude);
 }
 
 function showError(error) {
@@ -41,6 +41,7 @@ function showError(error) {
     }
 }
 
+
 GHLocation.prototype.getLocation = function () {
 
     var x = document.getElementById("gps_Location");
@@ -59,7 +60,6 @@ GHLocation.prototype.setLat = function(lat){
 GHLocation.prototype.setLon = function(lon){
     this.location_lon =lon;
 };
-
 
 GHLocation.prototype.getLat = function(){
     return this.location_lat;

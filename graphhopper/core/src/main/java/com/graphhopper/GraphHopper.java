@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.GPXUtil.GPXFilter;
 import com.graphhopper.GPXUtil.GPXParsing_Edge;
 import com.graphhopper.GPXUtil.PointListCustom;
 import com.graphhopper.json.geo.JsonFeature;
@@ -121,9 +122,8 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     private PointListCustom pointList = new PointListCustom();
+    private int PointCount = 0;
 
-
-    private int point_count=0;
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -1294,6 +1294,7 @@ public class GraphHopper implements GraphHopperAPI {
         String swlang;
         PointListCustom plc_input = new PointListCustom();
         GPXParsing_Edge gpxParsing_edge = new GPXParsing_Edge();
+        PointList correctPointList = new PointList();
 
         pointList.add(point,Double.parseDouble(acc),time);
         plc_input = gpxParsing_edge.ParseMatchingEdge(locationIndex,pointList);
@@ -1306,9 +1307,18 @@ public class GraphHopper implements GraphHopperAPI {
             GPX_Point_Array.add(swlang);
         }
 
-        System.out.println("GPX Node:"+pointList);
-        System.out.println("Closest Node: "+plc_input);
+        //System.out.println("GPX Node:"+pointList);
+        //System.out.println("Closest Node: "+plc_input);
         gpxParsing_edge.getEdgeID();
+        System.out.println(" ");
+
+        if(pointList.size() >= 2){
+            GPXFilter gpxFilter = new GPXFilter();
+            correctPointList = gpxFilter.FilterSpeedWithAcc(pointList);
+            System.out.println(" ");
+            System.out.println("add point:" + correctPointList);
+            //gpxFilter.getSpeed(pointList,pointList.size()-2,pointList.size()-1);
+        }
 
         return GPX_Point_Array;
     }

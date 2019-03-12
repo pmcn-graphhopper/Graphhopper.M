@@ -42965,6 +42965,8 @@ module.exports = GHInput;
 
 },{}],15:[function(require,module,exports){
 
+var mainTemplate = require('../main-template.js');
+
 var GHLocation = function () {
     this.location_lat = null;
     this.location_lon = null;
@@ -42973,7 +42975,6 @@ var GHLocation = function () {
 function showPosition(position) {
 
     var x = document.getElementById("gps_Location");
-
     var timestamp = new Date(position.timestamp);
 
     var time = timestamp.getFullYear()+"-"+ (timestamp.getMonth()+1)+"-"+timestamp.getDate()+" "
@@ -42984,8 +42985,7 @@ function showPosition(position) {
         "<br>Accuracy: "+ position.coords.accuracy +
         "<br>Time:" + time ;
 
-    this.location_lat = position.coords.latitude;
-    this.location_lon = position.coords.longitude;
+    mainTemplate.routing(position.coords.latitude,position.coords.longitude);
 }
 
 function showError(error) {
@@ -43007,6 +43007,7 @@ function showError(error) {
     }
 }
 
+
 GHLocation.prototype.getLocation = function () {
 
     var x = document.getElementById("gps_Location");
@@ -43026,7 +43027,6 @@ GHLocation.prototype.setLon = function(lon){
     this.location_lon =lon;
 };
 
-
 GHLocation.prototype.getLat = function(){
     return this.location_lat;
 };
@@ -43043,7 +43043,7 @@ module.exports = GHLocation;
 
 
 
-},{}],16:[function(require,module,exports){
+},{"../main-template.js":25}],16:[function(require,module,exports){
 var GHRoute = require('./GHRoute.js');
 var GHInput = require('./GHInput.js');
 var graphhopperTools = require('./tools.js');
@@ -44737,8 +44737,6 @@ var locationGet = true;
 var locationStop = false;
 var HomeCoordObject;
 
-var GHloc = new GHLocation();
-
 //var IntervalLocation;
 
 // usage: log('inside coolFunc',this,arguments);
@@ -45525,10 +45523,6 @@ function testGPX(){
         }
         count++;
 
-        //for(var j=0 ; j < GPX_Point.length; j++){
-        //    latlonArray = GPX_Point[j].split(',');
-        //    mapLayer.createMarkerGPX(latlonArray[1],latlonArray[0])
-        //}
     });
 
     console.log(GPXc.GPXurl);
@@ -45536,8 +45530,8 @@ function testGPX(){
 }
 
 function drawLine(){
-    var defaultRouteStyle = {color: "#006666", "weight": 5, "opacity": 0.6};
 
+    var defaultRouteStyle = {color: "#006666", "weight": 5, "opacity": 0.6};
     var geojsonFeature = {
         "type": "Feature",
         "geometry": {
@@ -45549,18 +45543,23 @@ function drawLine(){
             snapped_waypoints: path_snapped_waypoints
         }
     };
-
-    console.log(geojsonFeature);
-
+    //console.log(geojsonFeature);
     mapLayer.addDataToRoutingLayer(geojsonFeature);
-
 }
 
+/**Clear Line and marker**/
 function ClearLayer() {
     mapLayer.clearLayers();
 }
 
-function routing(routingFromLat,routingFromLon){
+
+/**navigation gps location to home**/
+function RoutingLocation() {
+    var GHloc = new GHLocation();
+    GHloc.getLocation();
+}
+/**navigation**/
+module.exports.routing = function(routingFromLat,routingFromLon){
 
     var pathindex = 0;
     var GPXc = new GHCustom();
@@ -45585,26 +45584,23 @@ function routing(routingFromLat,routingFromLon){
             var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
             mapLayer.fitMapToBounds(tmpB);
         }
-
     });
-
     console.log(GPXc.GPXurl);
-}
+};
 
+/**set time to go get the location**/
 function Location(boolean) {
-
     if(boolean === true)
-        window.IntervalLocation = setInterval(getLocation,12000);
+        window.IntervalLocation = setInterval(getLocation,20000);
     if(boolean === false)
         clearInterval(window.IntervalLocation);
 
     console.log(IntervalLocation);
 }
 
+/**Get Location GPS Node**/
 function getLocation() {
-	
 	var x = document.getElementById("gps_Location");
-	
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(showPosition, showError);
     } else {
@@ -45612,8 +45608,8 @@ function getLocation() {
     }
 }
 
+/**callback function to success**/
 function showPosition(position) {
-	
 	var x = document.getElementById("gps_Location");
     var latlonArray = [];
 
@@ -45637,12 +45633,10 @@ function showPosition(position) {
 
         latlonArray = GPX_Point[count].split(',');
         mapLayer.createMarkerGPX(latlonArray[1],latlonArray[0]);
-
         path_point.push(latlonArray);
 
         if(count == 0 && count == 1)
             path_snapped_waypoints.push(latlonArray);
-
         if(count > 1)
         {
             path_snapped_waypoints.pop();
@@ -45654,8 +45648,8 @@ function showPosition(position) {
     console.log(GPXc.GPXurl);
 }
 
+/**callback function to fail**/
 function showError(error) {
-	
 	var x = document.getElementById("gps_Location");
 	
     switch(error.code) {
@@ -45674,39 +45668,17 @@ function showError(error) {
     }
 }
 
+/**delay function**/
 function sleep(sec){
     var time = new Date().getTime();
     while (new Date().getTime() - time < sec * 1000);
 }
 
-function RoutingLocation() {
-
-    var x = document.getElementById("gps_Location");
-
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showRoutingPosition, showError);
-    } else {
-        x.innerHTML = "Geolocation is not supported by this browser.";
-    }
-}
 
 
-function showRoutingPosition(position) {
 
-    var x = document.getElementById("gps_Location");
 
-    var timestamp = new Date(position.timestamp);
 
-    var time = timestamp.getFullYear() + "-" + (timestamp.getMonth() + 1) + "-" + timestamp.getDate() + " "
-        + timestamp.getHours() + ":" + timestamp.getMinutes() + ":" + timestamp.getSeconds();
-
-    x.innerHTML = "Latitude:" + position.coords.latitude +
-        "<br>Longitude: " + position.coords.longitude +
-        "<br>Accuracy: " + position.coords.accuracy +
-        "<br>Time:" + time;
-
-    routing(position.coords.latitude,position.coords.longitude)
-}
 module.exports.setFlag = setFlag;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})

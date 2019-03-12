@@ -4,6 +4,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
@@ -13,8 +14,7 @@ public class GPXParsing_Edge {
 
     public ArrayList<Integer> edge_ID = new ArrayList<>();
 
-    public void GPXParsing_Edge(){};
-
+    /**use method 4:1 get closest node and edge**/
     public PointListCustom ParseMatchingEdge (LocationIndex locationIndex,PointListCustom plc_input){
         PointListCustom plc_output = new PointListCustom();
 
@@ -27,14 +27,12 @@ public class GPXParsing_Edge {
 
             edge_ID.add(qrClosestEdge.getEdge());
             plc_output.add(lat_temp51,lon_temp51);
-
         }
-
         return plc_output;
     }
 
     public void getEdgeID(){
-        System.out.println(edge_ID);
+        System.out.println("get edge ID: "+edge_ID);
     }
 
 

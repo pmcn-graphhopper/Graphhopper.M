@@ -2,6 +2,8 @@ package com.graphhopper.resources;
 
 
 import com.graphhopper.*;
+import com.graphhopper.Database.DBHelper;
+import com.graphhopper.GPXUtil.GPXFilter;
 import com.graphhopper.http.WebHopper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
@@ -23,15 +25,11 @@ import java.util.List;
 public class GPXResource {
 
     private final Boolean hasElevation;
-
     private GHResponse ghResponse;
-    private GHRequest request;
-
     private GraphHopper graphHopper;
 
     private ArrayList<String> GPX_Point_Array;
-    private double fromlat,fromlon;
-    private double tolat,tolon;
+    private double fromlat,fromlon,tolat,tolon;
 
     @Inject
     public GPXResource (GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
@@ -70,12 +68,14 @@ public class GPXResource {
             GHPoint HomePoint = gpxPoints.get(0);
             tolat = HomePoint.getLat();
             tolon = HomePoint.getLon();
-            System.out.println(tolat +","+tolon);
+            //System.out.println(tolat +","+tolon);
+
+            DBHelper dbHelper = new DBHelper();
+            dbHelper.DBConnection();
 
             return Response.ok(WebHopper.GResponse()).build();
         }
         else {
-
             GHPoint GpxPoint = gpxPoints.get(0);
             GPX_Point_Array = graphHopper.GPX_Point_record(GpxPoint,acc,time);
 
