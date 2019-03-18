@@ -85,6 +85,7 @@ public class GPXFilter {
             else
                 AverageAccuracy = Math.ceil((AverageAccuracy * 2) / 10) * 10;
 
+            System.out.println("current point Accuracy:" + plc_input.getAccuracy(index));
             System.out.println("AverageAccuracy:" + AverageAccuracy);
 
             return plc_input.getAccuracy(index) <= AverageAccuracy;

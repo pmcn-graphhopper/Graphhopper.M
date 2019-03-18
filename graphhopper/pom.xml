@@ -85,6 +85,7 @@
         <module>web</module>
         <module>client-hc</module>
     </modules>
+
     <build>
         <plugins>
             <plugin>
@@ -158,12 +159,18 @@
                 <version>3.1.6</version>
                 <!-- required as 3.1.7 is not yet released for the plugin but we hit problem spotbugs#711 -->
                 <dependencies>
-		    <dependency>
-		      <groupId>com.github.spotbugs</groupId>
-		      <artifactId>spotbugs</artifactId>
-		      <version>3.1.7</version>
-		    </dependency>
-		</dependencies>
+		            <dependency>
+		                <groupId>com.github.spotbugs</groupId>
+		                <artifactId>spotbugs</artifactId>
+		                 <version>3.1.7</version>
+		            </dependency>
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                        <version>8.0.15</version>
+                        <scope>compile</scope>
+                    </dependency>
+		        </dependencies>
                 <configuration>
                     <maxRank>4</maxRank>
                     <failOnError>true</failOnError>

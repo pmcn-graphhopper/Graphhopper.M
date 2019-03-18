@@ -917,7 +917,7 @@ module.exports.routing = function(routingFromLat,routingFromLon){
 /**set time to go get the location**/
 function Location(boolean) {
     if(boolean === true)
-        window.IntervalLocation = setInterval(getLocation,20000);
+        window.IntervalLocation = setInterval(getLocation,5000);
     if(boolean === false)
         clearInterval(window.IntervalLocation);
 

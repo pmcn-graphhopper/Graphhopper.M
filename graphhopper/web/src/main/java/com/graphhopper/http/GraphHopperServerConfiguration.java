@@ -49,4 +49,7 @@ public class GraphHopperServerConfiguration extends Configuration implements Gra
     public AssetsConfiguration getAssetsConfiguration() {
         return assets;
     }
+
+
+
 }
