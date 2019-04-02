@@ -61,7 +61,7 @@ public class GPXMapMatching {
         System.out.println(edge_ID);
 
         /**Write to Map Matching Edge of training**/
-        WriteGpxDB();
+        TrainGpxForDB();
     }
 
 
@@ -107,19 +107,18 @@ public class GPXMapMatching {
         WithMapMatching();
     }
 
-    private void WriteGpxDB(){
+    private void TrainGpxForDB(){
 
         double weighting = 0;
 
         DBHelper dbHelper = new DBHelper();
-        
 
         /*test GET DB Data*/
         try {
             dbHelper.DBConnection();
 
-            weighting = dbHelper.getEdgeWeighting(edge_ID);
-            
+            dbHelper.TrainEdgeWeighting(edge_ID);
+
             dbHelper.DBClose();
         } catch (SQLException e) {
             e.printStackTrace();

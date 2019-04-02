@@ -1,5 +1,7 @@
 package com.graphhopper.Database;
 
+import com.graphhopper.GPXUtil.GPXTraining;
+
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -22,8 +24,6 @@ public class DBHelper {
                 System.out.println("database open...");
             }
 
-            DBWrite();
-
         } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
@@ -38,28 +38,14 @@ public class DBHelper {
         }
     }
 
-
-    private void DBWrite(){
-        try {
-            preparedStatement = connection.prepareStatement("INSERT INTO gpx VALUES(?,?)");
-
-            preparedStatement.setInt(1,377858);
-            preparedStatement.setDouble(2,365.6);
-
-            preparedStatement.executeUpdate();
-            preparedStatement.clearParameters();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void DBWrite(int edgeId){
         try {
-            preparedStatement = connection.prepareStatement("INSERT INTO gpx VALUES(?,?)");
+            preparedStatement = connection.prepareStatement("INSERT INTO gpx VALUES(?,?,?,?)");
 
             preparedStatement.setInt(1,edgeId);
-            preparedStatement.setDouble(2,1);
+            preparedStatement.setDouble(2,0);
+            preparedStatement.setInt(3,1);
+            preparedStatement.setInt(4,1);
 
             preparedStatement.executeUpdate();
             preparedStatement.clearParameters();
@@ -84,20 +70,20 @@ public class DBHelper {
         }
     }
 
-    public double getEdgeWeighting(ArrayList<Integer> EdgeID){
+    public void TrainEdgeWeighting(ArrayList<Integer> EdgeID){
 
         boolean DataExit = false;
-        double EdgeWeighting =0.0;
+        double EdgeWeighting;
+        GPXTraining gpxTraining = new GPXTraining();
 
         for(int id =0; id < EdgeID.size(); id++){
-
             try {
                 ResultSet resultSet = statement.executeQuery("SELECT * FROM gpx WHERE edge =" + EdgeID.get(id));
 
                 while(resultSet.next()){
-                    System.out.print(resultSet.getInt("edge") + "\t");
-                    System.out.println(resultSet.getDouble("weighting") + "\t");
                     EdgeWeighting = resultSet.getDouble("weighting");
+                    EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting,resultSet.getInt("CurrentTrain"),resultSet.getInt("LastTrain"));
+                    DBUpdate(resultSet.getInt("edge"),EdgeWeighting,resultSet.getInt("CurrentTrain")+1,resultSet.getInt("LastTrain")+1);
                     DataExit = true;
                 }
 
@@ -113,8 +99,24 @@ public class DBHelper {
             }
 
         }
+    }
 
-        return EdgeWeighting;
+    public void DBUpdate(int edgeId, double weight, int current_time, int last_time){
+        try {
+            preparedStatement = connection.prepareStatement("UPDATE gpx SET edge=?, weighting=?, CurrentTrain=?, LastTrain=? WHERE edge="+ edgeId);
+
+            preparedStatement.setInt(1,edgeId);
+            preparedStatement.setDouble(2,weight);
+            preparedStatement.setInt(3,current_time);
+            preparedStatement.setInt(4,last_time);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.clearParameters();
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }
