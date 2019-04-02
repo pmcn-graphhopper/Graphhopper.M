@@ -20,7 +20,10 @@ package com.graphhopper;
 import com.graphhopper.GPXUtil.GPXFilter;
 import com.graphhopper.GPXUtil.GPXParsing_Edge;
 import com.graphhopper.GPXUtil.PointListCustom;
+import com.graphhopper.MapMatching.GPXMapMatching;
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.matching.MapMatching;
+import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
@@ -79,7 +82,7 @@ public class GraphHopper implements GraphHopperAPI {
     boolean enableInstructions = true;
     // for graph:
     private GraphHopperStorage ghStorage;
-    private EncodingManager encodingManager;
+    public EncodingManager encodingManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessType = DAType.RAM_STORE;
@@ -122,8 +125,7 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     private PointListCustom pointList = new PointListCustom();
-    private int PointCount = 0;
-
+    private Weighting MyWeighting;
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -935,6 +937,7 @@ public class GraphHopper implements GraphHopperAPI {
             //System.out.print("MyCustom");
             weighting = new MyCustomWeighting(encoder, hintsMap);
         }
+
         if (weighting == null)
             throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
 
@@ -944,7 +947,7 @@ public class GraphHopper implements GraphHopperAPI {
                     parseBlockArea(blockAreaStr, DefaultEdgeFilter.allEdges(encoder), hintsMap.getDouble("block_area.edge_id_max_area", 1000 * 1000));
             return new BlockAreaWeighting(weighting, blockArea);
         }
-
+        MyWeighting = weighting;
         return weighting;
     }
 
@@ -1288,36 +1291,44 @@ public class GraphHopper implements GraphHopperAPI {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
 
+    public Weighting getWeighting(){
+        return MyWeighting;
+    }
+
     public ArrayList<String> GPX_Point_record(GHPoint point,String acc, String time){
 
         ArrayList<String>  GPX_Point_Array = new ArrayList<String>();
         String swlang;
         PointListCustom plc_input = new PointListCustom();
         GPXParsing_Edge gpxParsing_edge = new GPXParsing_Edge();
-        PointList correctPointList = new PointList();
+        PointListCustom correctPointList = new PointListCustom();
 
         pointList.add(point,Double.parseDouble(acc),time);
-        plc_input = gpxParsing_edge.ParseMatchingEdge(locationIndex,pointList);
 
-        //System.out.println(pointList.size());
+        //GPXMapMatching gpxMapMatching = new GPXMapMatching();
+        //gpxMapMatching.getEntries(pointList);
 
-        for(int k=0;k<pointList.size();k++){
-            GHPoint GPX_point = pointList.toGHPoint(k);
-            swlang = GPX_point.getLon() + "," +GPX_point.getLat();
-            GPX_Point_Array.add(swlang);
-        }
-
-        //System.out.println("GPX Node:"+pointList);
-        //System.out.println("Closest Node: "+plc_input);
-        gpxParsing_edge.getEdgeID();
-        System.out.println(" ");
-
+        //filter class
         if(pointList.size() >= 2){
             GPXFilter gpxFilter = new GPXFilter();
             correctPointList = gpxFilter.FilterSpeedWithAcc(pointList);
-            System.out.println(" ");
-            System.out.println("add point:" + correctPointList);
-            //gpxFilter.getSpeed(pointList,pointList.size()-2,pointList.size()-1);
+            if(correctPointList.size() > 0){
+                System.out.println(" ");
+                System.out.println("add point:" + correctPointList);
+                swlang = correctPointList.getLat(0) + "," + correctPointList.getLon(0);
+                GPX_Point_Array.add(swlang);
+            }
+
+            //plc_input = gpxParsing_edge.ParseMatchingEdge(locationIndex,pointList);
+            //gpxParsing_edge.getEdgeID();
+            //System.out.println(" ");
+        }
+        else{
+            for(int k=0;k<pointList.size();k++){
+                GHPoint GPX_point = pointList.toGHPoint(k);
+                swlang = GPX_point.getLon() + "," +GPX_point.getLat();
+                GPX_Point_Array.add(swlang);
+            }
         }
 
         return GPX_Point_Array;
@@ -1333,7 +1344,6 @@ public class GraphHopper implements GraphHopperAPI {
         GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                   setAlgorithm(Parameters.Algorithms.DIJKSTRA_BI).
                   setVehicle("foot").
-                  //setLocale(Locale.TAIWAN).
                   setWeighting("MyCustomWeighting");
 
         req.getHints().put(Routing.INSTRUCTIONS,"false");
@@ -1350,4 +1360,5 @@ public class GraphHopper implements GraphHopperAPI {
         return resp;
 
     }
+
 }

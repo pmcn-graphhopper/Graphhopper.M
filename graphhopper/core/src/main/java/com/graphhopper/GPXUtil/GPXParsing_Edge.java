@@ -12,7 +12,7 @@ import java.util.List;
 
 public class GPXParsing_Edge {
 
-    public ArrayList<Integer> edge_ID = new ArrayList<>();
+    private ArrayList<Integer> edge_ID = new ArrayList<>();
 
     /**use method 4:1 get closest node and edge**/
     public PointListCustom ParseMatchingEdge (LocationIndex locationIndex,PointListCustom plc_input){

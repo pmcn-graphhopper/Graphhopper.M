@@ -27,11 +27,18 @@ public class DefaultEdgeFilter implements EdgeFilter {
     private final boolean fwd;
     private FlagEncoder encoder;
 
-    protected DefaultEdgeFilter(FlagEncoder encoder, boolean fwd, boolean bwd) {
+    public DefaultEdgeFilter(FlagEncoder encoder, boolean fwd, boolean bwd) {
         this.encoder = encoder;
         this.bwd = bwd;
         this.fwd = fwd;
     }
+
+    public DefaultEdgeFilter(FlagEncoder flagEncoder) {
+        this.encoder = flagEncoder;
+        this.bwd = true;
+        this.fwd = true;
+    }
+
 
     public static DefaultEdgeFilter outEdges(FlagEncoder flagEncoder) {
         return new DefaultEdgeFilter(flagEncoder, true, false);

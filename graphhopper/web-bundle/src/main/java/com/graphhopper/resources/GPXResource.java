@@ -4,6 +4,7 @@ package com.graphhopper.resources;
 import com.graphhopper.*;
 import com.graphhopper.Database.DBHelper;
 import com.graphhopper.GPXUtil.GPXFilter;
+import com.graphhopper.MapMatching.GPXMapMatching;
 import com.graphhopper.http.WebHopper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
@@ -44,6 +45,7 @@ public class GPXResource {
             @QueryParam("setHome") @DefaultValue("f") String strhome,
             @QueryParam("accuracy")  @DefaultValue("0.0")  String acc,
             @QueryParam("time")  @DefaultValue(" ")  String time,
+            @QueryParam("MapMatching") @DefaultValue("f") String mapMatching,
             @QueryParam("routing") @DefaultValue("f") String route){
 
         if (route.equalsIgnoreCase("t"))
@@ -74,6 +76,14 @@ public class GPXResource {
             dbHelper.DBConnection();
 
             return Response.ok(WebHopper.GResponse()).build();
+
+        } else if(mapMatching.equalsIgnoreCase("t")) {
+
+            GPXMapMatching gpxMapMatching = new GPXMapMatching(graphHopper);
+            gpxMapMatching.TestPLC();
+
+            return Response.ok(WebHopper.GResponse()).build();
+
         }
         else {
             GHPoint GpxPoint = gpxPoints.get(0);

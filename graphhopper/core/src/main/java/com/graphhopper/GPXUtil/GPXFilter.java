@@ -10,21 +10,19 @@ import java.text.SimpleDateFormat;
 
 public class GPXFilter {
     private DistanceCalcEarth distanceCalcEarth = new DistanceCalcEarth();
-    private PointList  FilteredPointList = new PointList();
+    private PointListCustom  FilteredPointList = new PointListCustom();
 
-    private double LimitMaxSpeed = 110;
     private long fromPointTime =0;
     private long toPointTime =0;
-
     private double AverageAccuracy = 0;
-    private int AverageCount =0;
 
-    public PointList FilterSpeedWithAcc(PointListCustom plc_input){
+    public PointListCustom FilterSpeedWithAcc(PointListCustom plc_input){
 
         if(plc_input.size() >= 2){
             for(int k=plc_input.size()-2 ; k < plc_input.size()-1 ; k++){
-                if(getSpeed(plc_input,k,k+1) < LimitMaxSpeed && AccuarcyWithFilter(plc_input,k)){
-                    FilteredPointList.add(plc_input.getLat(k),plc_input.getLon(k),plc_input.getEle(k));
+                double limitMaxSpeed = 100;
+                if(getSpeed(plc_input,k,k+1) < limitMaxSpeed && AccuarcyWithFilter(plc_input,k)){
+                    FilteredPointList.add(plc_input.getLat(k),plc_input.getLon(k),plc_input.getEle(k),plc_input.getAccuracy(k),plc_input.getTime(k));
                 }
 
             }
@@ -69,9 +67,15 @@ public class GPXFilter {
     private boolean AccuarcyWithFilter(PointListCustom plc_input,int index){
 
         if(plc_input.size <=10){
+            System.out.println("current point Accuracy:" + plc_input.getAccuracy(index));
             return plc_input.getAccuracy(index) <= 99f;
         }
         else {
+
+            if(plc_input.getAccuracy(index) > 200)
+                return false;
+
+            int AverageCount =0;
 
             for(int i = index >15 ? index - 15 : 0; index + 15 < plc_input.size() -1 ? i < index +15 : i < plc_input.size(); i++){
                 AverageAccuracy += plc_input.getAccuracy(i);

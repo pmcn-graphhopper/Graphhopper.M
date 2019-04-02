@@ -28,13 +28,18 @@ GHCustom.prototype.hasElevation = function () {
     return this.elevation;
 };
 
+GHCustom.prototype.MapMatching = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&MapMatching=t";
+}
+
+
 GHCustom.prototype.doRequest = function (url ,callback) {
     var that = this;
     $.ajax({
         timeout: 30000,
         url: url,
         success: function (json) {
-            alert('Ajax request success!');
+            //alert('Ajax request success!');
 
             if(json.encoded){
                 console.log("Receive!");

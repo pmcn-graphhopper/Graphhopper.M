@@ -42851,13 +42851,18 @@ GHCustom.prototype.hasElevation = function () {
     return this.elevation;
 };
 
+GHCustom.prototype.MapMatching = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&MapMatching=t";
+}
+
+
 GHCustom.prototype.doRequest = function (url ,callback) {
     var that = this;
     $.ajax({
         timeout: 30000,
         url: url,
         success: function (json) {
-            alert('Ajax request success!');
+            //alert('Ajax request success!');
 
             if(json.encoded){
                 console.log("Receive!");
@@ -44785,6 +44790,7 @@ $(document).ready(function (e) {
     $("#routing").click(function(){RoutingLocation();});
     $("#getLocation").click(function(){Location(locationGet)});
     $("#stopLocation").click(function(){Location(locationStop)});
+    $("#mapMatching").click(function () {MapMatching()});
 
     var urlParams = urlTools.parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -45098,6 +45104,7 @@ function setEndCoord(e) {
     routeIfAllResolved();
 }
 
+/**function e is event**/
 function setHomeCoord(e) {
     HomeCoordObject = e.latlng.wrap();
 
@@ -45613,7 +45620,8 @@ function showPosition(position) {
 	var x = document.getElementById("gps_Location");
     var latlonArray = [];
 
-	var timestamp = new Date(position.timestamp);
+	//var timestamp = new Date(position.timestamp);
+    var timestamp = new Date();
 
 	var time = timestamp.getFullYear()+"-"+ (timestamp.getMonth()+1)+"-"+timestamp.getDate()+" "
               +timestamp.getHours()+":"+timestamp.getMinutes()+":"+timestamp.getSeconds();
@@ -45674,7 +45682,19 @@ function sleep(sec){
     while (new Date().getTime() - time < sec * 1000);
 }
 
+/**Map Matching**/
 
+function MapMatching(){
+    var GPXc = new GHCustom();
+    GPXc.MapMatching(0,0);
+
+    GPXc.doRequest(GPXc.GPXurl, function (json) {
+        console.log("this is json");
+        console.log(json);
+    });
+
+    console.log(GPXc.GPXurl);
+}
 
 
 
