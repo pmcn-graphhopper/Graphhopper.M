@@ -959,21 +959,29 @@ function showPosition(position) {
         console.log(json);
 
         var GPX_Point =json.GPX_Point;
+        var GPX_length = GPX_Point.length;
 
-        latlonArray = GPX_Point[count].split(',');
-        mapLayer.createMarkerGPX(latlonArray[1],latlonArray[0]);
-        path_point.push(latlonArray);
+        if(count < GPX_length){
+            for(var i = count; i < GPX_length; i++){
+                latlonArray = GPX_Point[i].split(',');
+                mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+                path_point.push(latlonArray);
 
+            }
+            count = GPX_length;
+        }
+
+
+        /**
         if(count == 0 && count == 1)
             path_snapped_waypoints.push(latlonArray);
         if(count > 1)
         {
             path_snapped_waypoints.pop();
             path_snapped_waypoints.push(latlonArray);
-        }
-        count++;
-    });
+        }**/
 
+    });
     console.log(GPXc.GPXurl);
 }
 
@@ -997,7 +1005,7 @@ function showError(error) {
     }
 }
 
-/**delay function**/
+/**delay function, not use**/
 function sleep(sec){
     var time = new Date().getTime();
     while (new Date().getTime() - time < sec * 1000);

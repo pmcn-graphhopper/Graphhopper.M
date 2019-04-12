@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.Database.DBHelper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -23,16 +24,16 @@ public class MyCustomWeighting extends AbstractWeighting {
     private final double headingPenalty;
     private final long headingPenaltyMillis;
     private final double maxSpeed;
+    private DBHelper dbHelper;
 
-    private double train_times = 1;
-
-    private int edge_number = 0;
 
     public MyCustomWeighting(FlagEncoder encoder, PMap map) {
         super(encoder);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
+        dbHelper = new DBHelper();
+        dbHelper.DBConnection();
 
     }
 
@@ -48,21 +49,20 @@ public class MyCustomWeighting extends AbstractWeighting {
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
-        //GraphHopper hopper = new GraphHopper();
-        //train_times = hopper.get_train_time();
-
-        double time = edge.getDistance() / train_times;
-
-
-        //System.out.println( "edge number :" + edge_number + " this edge id :" + edge.getEdge() +" train times :" + train_times);
-        //edge_number += 1;
+        double time = edge.getDistance() / speed * SPEED_CONV;
 
         // add direction penalties at start/stop/via points
         boolean unfavoredEdge = edge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
         if (unfavoredEdge)
             time += headingPenalty;
 
-        return time;
+        double weightingAlpha = dbHelper.DBGetEdgeWeighting(edge.getEdge());
+
+        //System.out.println("edge id = "+ edge.getEdge() +" edge weight id = ");
+        //System.out.println(edge.getDistance() / Math.exp(weightingAlpha));
+        //System.out.println(" ");
+
+        return (edge.getDistance() / Math.exp(weightingAlpha));
     }
 
     @Override

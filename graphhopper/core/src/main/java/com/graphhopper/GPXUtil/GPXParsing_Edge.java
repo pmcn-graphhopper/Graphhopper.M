@@ -10,6 +10,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.ArrayList;
 import java.util.List;
 
+/**not use**/
 public class GPXParsing_Edge {
 
     private ArrayList<Integer> edge_ID = new ArrayList<>();

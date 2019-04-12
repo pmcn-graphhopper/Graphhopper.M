@@ -70,17 +70,12 @@ public class GPXResource {
             GHPoint HomePoint = gpxPoints.get(0);
             tolat = HomePoint.getLat();
             tolon = HomePoint.getLon();
-            //System.out.println(tolat +","+tolon);
-
-            DBHelper dbHelper = new DBHelper();
-            dbHelper.DBConnection();
 
             return Response.ok(WebHopper.GResponse()).build();
 
         } else if(mapMatching.equalsIgnoreCase("t")) {
 
-            GPXMapMatching gpxMapMatching = new GPXMapMatching(graphHopper);
-            gpxMapMatching.TestPLC();
+            graphHopper.RealTimeMapMatching(graphHopper);
 
             return Response.ok(WebHopper.GResponse()).build();
 

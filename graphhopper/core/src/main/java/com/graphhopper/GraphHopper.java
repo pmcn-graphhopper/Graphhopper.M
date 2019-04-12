@@ -125,6 +125,8 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     private PointListCustom pointList = new PointListCustom();
+    private PointListCustom correctPointList = new PointListCustom();
+    private PointListCustom plcStayPlace = new PointListCustom();
     private Weighting MyWeighting;
 
     public GraphHopper() {
@@ -1299,31 +1301,41 @@ public class GraphHopper implements GraphHopperAPI {
 
         ArrayList<String>  GPX_Point_Array = new ArrayList<String>();
         String swlang;
-        PointListCustom plc_input = new PointListCustom();
-        GPXParsing_Edge gpxParsing_edge = new GPXParsing_Edge();
-        PointListCustom correctPointList = new PointListCustom();
+        PointListCustom DetectSatyPlace = new PointListCustom();
+
 
         pointList.add(point,Double.parseDouble(acc),time);
-
-        //GPXMapMatching gpxMapMatching = new GPXMapMatching();
-        //gpxMapMatching.getEntries(pointList);
 
         //filter class
         if(pointList.size() >= 2){
             GPXFilter gpxFilter = new GPXFilter();
             correctPointList = gpxFilter.FilterSpeedWithAcc(pointList);
+
+            // return Filter after GPX List
             if(correctPointList.size() > 0){
-                System.out.println(" ");
-                System.out.println("add point:" + correctPointList);
-                swlang = correctPointList.getLat(0) + "," + correctPointList.getLon(0);
-                GPX_Point_Array.add(swlang);
+                for(int j=0 ; j < correctPointList.size() ; j++){
+                    GHPoint GPX_point = correctPointList.toGHPoint(j);
+                    swlang = GPX_point.getLon() + "," + GPX_point.getLat();
+                    GPX_Point_Array.add(swlang);
+                }
+                System.out.println("Correct Point List :" + GPX_Point_Array);
             }
 
-            //plc_input = gpxParsing_edge.ParseMatchingEdge(locationIndex,pointList);
-            //gpxParsing_edge.getEdgeID();
-            //System.out.println(" ");
+            //detect stay place point
+            if(correctPointList.size() >=3){
+                DetectSatyPlace = gpxFilter.PlaceStayCheck(correctPointList);
+                // Only get One Stay Place
+                if(DetectSatyPlace.size() > 0)
+                    plcStayPlace.add(DetectSatyPlace.getLat(0),DetectSatyPlace.getLon(0),Double.NaN,0,DetectSatyPlace.getTime(0));
+
+                System.out.println("Add After Stay Place :" + plcStayPlace);
+                plcStayPlace = gpxFilter.SamePointFiltered(plcStayPlace);
+                System.out.println("Filter Same Point After Stay Place :" + plcStayPlace);
+                System.out.println(" ");
+            }
         }
         else{
+            // return first gpx point
             for(int k=0;k<pointList.size();k++){
                 GHPoint GPX_point = pointList.toGHPoint(k);
                 swlang = GPX_point.getLon() + "," +GPX_point.getLat();
@@ -1361,4 +1373,11 @@ public class GraphHopper implements GraphHopperAPI {
 
     }
 
+    public void RealTimeMapMatching(GraphHopper graphHopper){
+
+        GPXMapMatching gpxMapMatching = new GPXMapMatching(graphHopper);
+        gpxMapMatching.getEntries(correctPointList);
+        gpxMapMatching.WithMapMatching();
+
+    }
 }

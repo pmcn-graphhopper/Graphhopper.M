@@ -486,11 +486,11 @@ public class PointListCustom implements Iterable<GHPoint3D>, PointAccess {
         PointListCustom clonePL = new PointListCustom(getSize(), is3D());
         if (is3D())
             for (int i = 0; i < getSize(); i++) {
-                clonePL.add(getLatitude(i), getLongitude(i), getElevation(i));
+                clonePL.add(getLatitude(i), getLongitude(i), getElevation(i),getAccuracy(i),getTime(i));
             }
         else
             for (int i = 0; i < getSize(); i++) {
-                clonePL.add(getLatitude(i), getLongitude(i));
+                clonePL.add(getLatitude(i), getLongitude(i), getElevation(i),getAccuracy(i),getTime(i));
             }
         if (reverse)
             clonePL.reverse();
@@ -501,6 +501,28 @@ public class PointListCustom implements Iterable<GHPoint3D>, PointAccess {
     public GHPoint3D toGHPoint(int index) {
         return new GHPoint3D(this.getLatitude(index), this.getLongitude(index), this.getElevation(index));
     }
+
+    public void remove(int RemoveOrder){
+        if (RemoveOrder < 0 || RemoveOrder >= this.getSize()) {
+            throw new IllegalArgumentException("Error removing, remove_copy order larger or smaller than PLC size.");
+        }else if (!this.is3D()){
+//            throw new IllegalArgumentException("Error removing, only 3D PLE is available to use this method! ");
+            for(int inew = RemoveOrder ; inew < this.getSize()-1; inew++){
+                setPLC(inew , this.getLatitude(inew+1), this.getLongitude(inew+1), 0, this.getAccuracy(inew+1), this.getTime(inew+1));
+            }
+
+            this.size--;
+        }else{
+
+            for(int inew = RemoveOrder ; inew < this.getSize()-1; inew++){
+                setPLC(inew , this.getLatitude(inew+1), this.getLongitude(inew+1), this.getElevation(inew+1), this.getAccuracy(inew+1), this.getTime(inew+1));
+            }
+
+            this.size--;
+        }
+
+    }
+
 
     @Override
     public Iterator<GHPoint3D> iterator() {

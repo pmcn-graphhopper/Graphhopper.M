@@ -61,7 +61,7 @@ public class GPXMapMatching {
         System.out.println(edge_ID);
 
         /**Write to Map Matching Edge of training**/
-        TrainGpxForDB();
+        //TrainGpxForDB();
     }
 
 
@@ -81,6 +81,7 @@ public class GPXMapMatching {
 
             Entries.add(new GPXEntry(pointListCustom.getLat(s),pointListCustom.getLon(s), time));
         }
+        System.out.println(Entries);
     }
 
     public void TestPLC(){

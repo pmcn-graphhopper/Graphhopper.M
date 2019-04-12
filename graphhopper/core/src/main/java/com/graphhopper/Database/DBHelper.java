@@ -1,6 +1,7 @@
 package com.graphhopper.Database;
 
 import com.graphhopper.GPXUtil.GPXTraining;
+import com.graphhopper.matching.GPXFile;
 
 import java.io.IOException;
 import java.sql.*;
@@ -12,6 +13,7 @@ public class DBHelper {
     private Connection connection;
     private PreparedStatement preparedStatement;
     private Statement statement;
+    private GPXTraining gpxTraining = new GPXTraining();
 
     public void DBConnection() {
 
@@ -55,6 +57,7 @@ public class DBHelper {
         }
     }
 
+
     public void DBRead(){
         try {
             ResultSet resultSet = preparedStatement.executeQuery("SELECT * FROM gpx");
@@ -72,9 +75,8 @@ public class DBHelper {
 
     public void TrainEdgeWeighting(ArrayList<Integer> EdgeID){
 
-        boolean DataExit = false;
+        boolean DataExist = false;
         double EdgeWeighting;
-        GPXTraining gpxTraining = new GPXTraining();
 
         for(int id =0; id < EdgeID.size(); id++){
             try {
@@ -84,15 +86,15 @@ public class DBHelper {
                     EdgeWeighting = resultSet.getDouble("weighting");
                     EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting,resultSet.getInt("CurrentTrain"),resultSet.getInt("LastTrain"));
                     DBUpdate(resultSet.getInt("edge"),EdgeWeighting,resultSet.getInt("CurrentTrain")+1,resultSet.getInt("LastTrain")+1);
-                    DataExit = true;
+                    DataExist = true;
                 }
 
-                if(!DataExit){
+                if(!DataExist){
                     System.out.println("NOT Value Edge: " + EdgeID.get(id));
                     DBWrite(EdgeID.get(id));
                 }
 
-                DataExit = false;
+                DataExist = false;
 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -118,5 +120,31 @@ public class DBHelper {
             e.printStackTrace();
         }
     }
+
+    public double DBGetEdgeWeighting(int EdgeID){
+
+        double EdgeWeighting = 0;
+        boolean DataExist = false;
+
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM gpx WHERE edge =" + EdgeID);
+
+            while(resultSet.next()){
+                EdgeWeighting = resultSet.getDouble("weighting");
+                DataExist = true;
+            }
+
+            if(!DataExist)
+                return EdgeWeighting;
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return EdgeWeighting;
+    }
+
+
 
 }
