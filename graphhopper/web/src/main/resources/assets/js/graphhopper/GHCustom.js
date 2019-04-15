@@ -32,6 +32,13 @@ GHCustom.prototype.MapMatching = function(lat,lon){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&MapMatching=t";
 }
 
+GHCustom.prototype.GetGPXFile = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&file=t";
+}
+
+GHCustom.prototype.TrainFile = function(lat,lon,index){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&train=t&index="+index;
+}
 
 GHCustom.prototype.doRequest = function (url ,callback) {
     var that = this;
@@ -40,7 +47,6 @@ GHCustom.prototype.doRequest = function (url ,callback) {
         url: url,
         success: function (json) {
             //alert('Ajax request success!');
-
             if(json.encoded){
                 console.log("Receive!");
 

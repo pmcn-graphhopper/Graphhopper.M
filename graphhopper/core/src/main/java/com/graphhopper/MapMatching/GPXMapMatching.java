@@ -1,9 +1,11 @@
 package com.graphhopper.MapMatching;
 
 import com.graphhopper.Database.DBHelper;
+import com.graphhopper.GPXUtil.GPXWriter;
 import com.graphhopper.GPXUtil.PointListCustom;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.EdgeMatch;
+import com.graphhopper.matching.GPXFile;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.routing.AlgorithmOptions;
@@ -15,6 +17,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+/**
+ author Yu-Hsiang Lin
+ **/
+
 
 public class GPXMapMatching {
 
@@ -57,8 +64,11 @@ public class GPXMapMatching {
             }
         }
 
-        System.out.println(resultEntries);
-        System.out.println(edge_ID);
+        //System.out.println(resultEntries);
+        System.out.println("MapMatching get Edge:" + edge_ID);
+
+        //consider next times training data
+        Entries.clear();
 
         /**Write to Map Matching Edge of training**/
         //TrainGpxForDB();
@@ -84,6 +94,7 @@ public class GPXMapMatching {
         System.out.println(Entries);
     }
 
+    /*test GPX data*/
     public void TestPLC(){
 
         PointListCustom TestpointList = new PointListCustom();
@@ -110,8 +121,6 @@ public class GPXMapMatching {
 
     private void TrainGpxForDB(){
 
-        double weighting = 0;
-
         DBHelper dbHelper = new DBHelper();
 
         /*test GET DB Data*/
@@ -125,7 +134,15 @@ public class GPXMapMatching {
             e.printStackTrace();
         }
 
-        System.out.println(weighting);
+    }
+
+    public void GPXdoImport(int version){
+
+        String fileName = "TrackGPX" + version +".gpx";
+
+        GPXFile gpxFile = new GPXFile();
+        Entries = gpxFile.doImport("trackgpx/"+ fileName).getEntries();
+        WithMapMatching();
     }
 
 }

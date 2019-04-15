@@ -4,6 +4,7 @@ package com.graphhopper.resources;
 import com.graphhopper.*;
 import com.graphhopper.Database.DBHelper;
 import com.graphhopper.GPXUtil.GPXFilter;
+import com.graphhopper.GPXUtil.GPXWriter;
 import com.graphhopper.MapMatching.GPXMapMatching;
 import com.graphhopper.http.WebHopper;
 import com.graphhopper.util.PointList;
@@ -25,7 +26,6 @@ import java.util.List;
 
 public class GPXResource {
 
-    private final Boolean hasElevation;
     private GHResponse ghResponse;
     private GraphHopper graphHopper;
 
@@ -35,7 +35,6 @@ public class GPXResource {
     @Inject
     public GPXResource (GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
-        this.hasElevation = hasElevation;
     }
 
     @GET
@@ -46,8 +45,12 @@ public class GPXResource {
             @QueryParam("accuracy")  @DefaultValue("0.0")  String acc,
             @QueryParam("time")  @DefaultValue(" ")  String time,
             @QueryParam("MapMatching") @DefaultValue("f") String mapMatching,
+            @QueryParam("file") @DefaultValue("f") String file,
+            @QueryParam("train") @DefaultValue("f") String train,
+            @QueryParam("index") @DefaultValue("f") String index,
             @QueryParam("routing") @DefaultValue("f") String route){
 
+        //route function
         if (route.equalsIgnoreCase("t"))
         {
             GHPoint fromPoint = gpxPoints.get(0);
@@ -65,6 +68,7 @@ public class GPXResource {
 
             return Response.ok(WebHopper.RouteJsonObject(ghResponse)).build();
 
+        //set home coordinate function
         } else if(strhome.equalsIgnoreCase("t")){
 
             GHPoint HomePoint = gpxPoints.get(0);
@@ -73,14 +77,33 @@ public class GPXResource {
 
             return Response.ok(WebHopper.GResponse()).build();
 
+        // real time Map Matching function
         } else if(mapMatching.equalsIgnoreCase("t")) {
 
             graphHopper.RealTimeMapMatching(graphHopper);
 
             return Response.ok(WebHopper.GResponse()).build();
 
+        // query all file
+        } else if(file.equalsIgnoreCase("t")) {
+
+            GPXWriter  gpxWriter = new GPXWriter();
+
+            return Response.ok(WebHopper.GPXFile(gpxWriter.displayFile())).build();
+
+        // training gpx file
+        } else if(train.equalsIgnoreCase("t")) {
+
+            int GPXIndex = Integer.valueOf(index);
+
+            GPXMapMatching gpxFileMapMatching = new GPXMapMatching(graphHopper);
+            gpxFileMapMatching.GPXdoImport(GPXIndex);
+
+            return Response.ok(WebHopper.GResponse()).build();
+
         }
         else {
+
             GHPoint GpxPoint = gpxPoints.get(0);
             GPX_Point_Array = graphHopper.GPX_Point_record(GpxPoint,acc,time);
 

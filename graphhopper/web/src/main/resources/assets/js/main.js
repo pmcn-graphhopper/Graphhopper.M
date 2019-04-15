@@ -42855,6 +42855,13 @@ GHCustom.prototype.MapMatching = function(lat,lon){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&MapMatching=t";
 }
 
+GHCustom.prototype.GetGPXFile = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&file=t";
+}
+
+GHCustom.prototype.TrainFile = function(lat,lon,index){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&train=t&index="+index;
+}
 
 GHCustom.prototype.doRequest = function (url ,callback) {
     var that = this;
@@ -42863,7 +42870,6 @@ GHCustom.prototype.doRequest = function (url ,callback) {
         url: url,
         success: function (json) {
             //alert('Ajax request success!');
-
             if(json.encoded){
                 console.log("Receive!");
 
@@ -44784,6 +44790,7 @@ $(document).ready(function (e) {
         mySubmit();
     });
 
+    /**web button click!!!**/
     $("#gpx_test").click(function(){testGPX();});
     $("#draw_line").click(function(){drawLine();});
     $("#clear_route").click(function(){ClearLayer();});
@@ -44791,6 +44798,8 @@ $(document).ready(function (e) {
     $("#getLocation").click(function(){Location(locationGet)});
     $("#stopLocation").click(function(){Location(locationStop)});
     $("#mapMatching").click(function () {MapMatching()});
+    $("#queryFile").click(function () {displayFile()});
+    $("#selectFile").click(function () {selectFile()});
 
     var urlParams = urlTools.parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -45704,8 +45713,46 @@ function MapMatching(){
     console.log(GPXc.GPXurl);
 }
 
+function displayFile() {
+    var GPXc = new GHCustom();
+    GPXc.GetGPXFile(0,0);
 
+    GPXc.doRequest(GPXc.GPXurl, function (json) {
+        console.log(json);
+        var file =json.GPXFile;
 
+        if(file.length !== 0){
+            $("#gpxFile").empty();
+            for(var index in file){
+                $("#gpxFile").append($("<option></option>").text(file[index]));
+            }
+        }
+    });
+}
+
+function selectFile(){
+
+    var GPXc = new GHCustom();
+    var str = null;
+
+    $("#gpxFile").find(":selected").each(function() {
+        if(this.text !== 'null'){
+            var strlength = this.text.length;
+            if(strlength === 13)
+                str = this.text.slice(8,9);
+            else
+                str = this.text.slice(8,10);
+            GPXc.TrainFile(0,0,str);
+
+            GPXc.doRequest(GPXc.GPXurl, function (json) {
+                console.log(json);
+            });
+        }else{
+            alert("please choose gpx file!")
+        }
+    });
+
+}
 
 module.exports.setFlag = setFlag;
 

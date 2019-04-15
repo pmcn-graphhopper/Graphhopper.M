@@ -103,4 +103,12 @@ public class WebHopper {
 
         return json;
     }
+
+    public static ObjectNode GPXFile(ArrayList<String> allfile){
+
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.putPOJO("GPXFile",allfile);
+
+        return json;
+    }
 }

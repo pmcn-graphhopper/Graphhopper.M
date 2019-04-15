@@ -7,6 +7,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+/**
+ author Yu-Hsiang Lin
+ **/
+
 public class GetDBSource implements DBSource{
     private String url;
     private String user;

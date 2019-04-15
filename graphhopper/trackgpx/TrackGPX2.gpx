@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper version 2" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>1970-01-01T00:00:00Z</time></metadata>
+<trk><name>GraphHopper GPX Track</name><trkseg>
+<trkpt lat="22.97664" lon="120.217477"><time>2019-03-26T07:10:11Z</time></trkpt>
+<trkpt lat="22.976653" lon="120.217438"><time>2019-03-26T07:10:26Z</time></trkpt>
+<trkpt lat="22.975626" lon="120.218646"><time>2019-03-26T07:10:41Z</time></trkpt>
+<trkpt lat="22.974982" lon="120.218013"><time>2019-03-26T07:10:56Z</time></trkpt>
+<trkpt lat="22.974791" lon="120.217425"><time>2019-03-26T07:11:11Z</time></trkpt>
+<trkpt lat="22.974732" lon="120.217468"><time>2019-03-26T07:11:26Z</time></trkpt>
+<trkpt lat="22.974662" lon="120.21731"><time>2019-03-26T07:11:41Z</time></trkpt>
+<trkpt lat="22.974849" lon="120.217469"><time>2019-03-26T07:11:56Z</time></trkpt>
+<trkpt lat="22.974545" lon="120.217384"><time>2019-03-26T07:12:11Z</time></trkpt>
+<trkpt lat="22.975622" lon="120.216393"><time>2019-03-26T07:12:26Z</time></trkpt>
+<trkpt lat="22.977214" lon="120.215469"><time>2019-03-26T07:12:41Z</time></trkpt>
+<trkpt lat="22.977726" lon="120.215327"><time>2019-03-26T07:12:56Z</time></trkpt>
+<trkpt lat="22.977907" lon="120.214932"><time>2019-03-26T07:13:11Z</time></trkpt>
+<trkpt lat="22.977882" lon="120.21433"><time>2019-03-26T07:13:26Z</time></trkpt>
+<trkpt lat="22.977837" lon="120.213682"><time>2019-03-26T07:13:41Z</time></trkpt>
+</trkseg>
+</trk>
+</gpx>

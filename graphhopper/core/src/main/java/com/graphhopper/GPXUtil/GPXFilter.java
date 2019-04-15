@@ -7,6 +7,10 @@ import com.graphhopper.util.PointList;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+/**
+ author Yu-Hsiang Lin
+ **/
+
 
 public class GPXFilter {
     private DistanceCalcEarth distanceCalcEarth = new DistanceCalcEarth();

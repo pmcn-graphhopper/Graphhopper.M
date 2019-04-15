@@ -1,5 +1,12 @@
 package com.graphhopper.GPXUtil;
 
+/**
+ *Train weight
+ *
+ author Yu-Hsiang Lin
+ **/
+
+
 public class GPXTraining {
 
     public double TrainWeighting(double CurrentWeighting, int CurrentTrainTime, int lastTrainTime ){
