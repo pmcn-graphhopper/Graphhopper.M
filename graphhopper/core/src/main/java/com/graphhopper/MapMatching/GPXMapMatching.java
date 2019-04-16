@@ -11,6 +11,7 @@ import com.graphhopper.matching.MatchResult;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -27,6 +28,7 @@ public class GPXMapMatching {
 
     private List<GPXEntry> Entries = new ArrayList<>();
     private ArrayList<Integer> edge_ID = new ArrayList<>();
+    private ArrayList<String>  MatchingPoint_Array = new ArrayList<String>();
     private GraphHopper graphHopper;
 
 
@@ -58,20 +60,20 @@ public class GPXMapMatching {
             for (int i = 0; i < pl.size(); i++) {
                 if (pl.is3D()) {
                     resultEntries.add(new GPXEntry(pl.getLatitude(i), pl.getLongitude(i), pl.getElevation(i), time));
+                    MatchingPoint_Array.add(pl.getLon(i) +","+pl.getLat(i));
                 } else {
                     resultEntries.add(new GPXEntry(pl.getLatitude(i), pl.getLongitude(i), time));
+                    MatchingPoint_Array.add(pl.getLon(i) +","+pl.getLat(i));
                 }
             }
         }
 
-        //System.out.println(resultEntries);
         System.out.println("MapMatching get Edge:" + edge_ID);
-
         //consider next times training data
         Entries.clear();
 
         /**Write to Map Matching Edge of training**/
-        //TrainGpxForDB();
+        TrainGpxForDB();
     }
 
 
@@ -91,7 +93,6 @@ public class GPXMapMatching {
 
             Entries.add(new GPXEntry(pointListCustom.getLat(s),pointListCustom.getLon(s), time));
         }
-        System.out.println(Entries);
     }
 
     /*test GPX data*/
@@ -136,13 +137,17 @@ public class GPXMapMatching {
 
     }
 
-    public void GPXdoImport(int version){
+    public ArrayList<String> GPXdoImport(int version){
 
         String fileName = "TrackGPX" + version +".gpx";
 
         GPXFile gpxFile = new GPXFile();
         Entries = gpxFile.doImport("trackgpx/"+ fileName).getEntries();
         WithMapMatching();
+
+        return MatchingPoint_Array;
     }
+
+
 
 }

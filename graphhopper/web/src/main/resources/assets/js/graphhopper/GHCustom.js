@@ -36,6 +36,14 @@ GHCustom.prototype.GetGPXFile = function(lat,lon){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&file=t";
 }
 
+GHCustom.prototype.ExportGPXFile = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&export=t";
+}
+
+GHCustom.prototype.StorageStayPlace = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&stay=t";
+}
+
 GHCustom.prototype.TrainFile = function(lat,lon,index){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&train=t&index="+index;
 }

@@ -56,13 +56,14 @@ public class MyCustomWeighting extends AbstractWeighting {
         if (unfavoredEdge)
             time += headingPenalty;
 
-        double weightingAlpha = dbHelper.DBGetEdgeWeighting(edge.getEdge());
+        int frequency = dbHelper.GetEdgeStayFrequency(edge.getEdge());
+        double weightingAlpha = dbHelper.DBGetEdgeWeighting(edge.getEdge()) ;
 
-        //System.out.println("edge id = "+ edge.getEdge() +" edge weight id = ");
+        System.out.println("edge id = "+ edge.getEdge() +" edge weight = " + weightingAlpha +" frequency = " + frequency);
         //System.out.println(edge.getDistance() / Math.exp(weightingAlpha));
         //System.out.println(" ");
 
-        return (edge.getDistance() / Math.exp(weightingAlpha));
+        return (edge.getDistance() / Math.exp(weightingAlpha)) * (1 / (1 + frequency));
     }
 
     @Override

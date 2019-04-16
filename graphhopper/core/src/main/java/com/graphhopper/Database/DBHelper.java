@@ -1,7 +1,6 @@
 package com.graphhopper.Database;
 
 import com.graphhopper.GPXUtil.GPXTraining;
-import com.graphhopper.matching.GPXFile;
 
 import java.io.IOException;
 import java.sql.*;
@@ -63,6 +62,60 @@ public class DBHelper {
     }
 
 
+    /**init training times**/
+    public void InitTrainingTimes(){
+        try {
+            preparedStatement = connection.prepareStatement("INSERT INTO training VALUES(?)");
+
+            preparedStatement.setInt(1,0);
+            preparedStatement.executeUpdate();
+            preparedStatement.clearParameters();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int adjustInitTimes(){
+
+        int times =1;
+
+        try {
+            ResultSet resultSet = preparedStatement.executeQuery("SELECT * FROM training WHERE TrainingTimes = 0");
+
+            while (resultSet.next()){
+                times = 0;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return times;
+    }
+
+
+    /**get Current Training Times**/
+    public int getTrainingTimes(){
+
+        int times =0;
+
+        try {
+            ResultSet resultSet = preparedStatement.executeQuery("SELECT TrainingTimes FROM training");
+
+            while (resultSet.next()){
+                times = resultSet.getInt("TrainingTimes");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return times;
+    }
+
+
+    /**Read data example**/
     public void DBRead(){
         try {
             ResultSet resultSet = preparedStatement.executeQuery("SELECT * FROM gpx");
@@ -95,7 +148,7 @@ public class DBHelper {
                 }
 
                 if(!DataExist){
-                    System.out.println("NOT Value Edge: " + EdgeID.get(id));
+                    //System.out.println("NOT Value Edge: " + EdgeID.get(id));
                     DBWrite(EdgeID.get(id));
                 }
 
@@ -108,7 +161,7 @@ public class DBHelper {
         }
     }
 
-    public void DBUpdate(int edgeId, double weight, int current_time, int last_time){
+    private void DBUpdate(int edgeId, double weight, int current_time, int last_time){
         try {
             preparedStatement = connection.prepareStatement("UPDATE gpx SET edge=?, weighting=?, CurrentTrain=?, LastTrain=? WHERE edge="+ edgeId);
 
@@ -150,6 +203,87 @@ public class DBHelper {
         return EdgeWeighting;
     }
 
+    /**storage stay place **/
+    public void StorageSatyPlace(double lat, double lon, int edge){
+        boolean DataExist = false;
+
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM stayplace WHERE edge =" + edge +" AND (lat =" + lat +" AND lon = " + lon +")");
+
+            while (resultSet.next()){
+                UPDateStayPlace(lat,lon,resultSet.getInt("frequency")+1,edge);
+                DataExist = true;
+            }
+
+            if(!DataExist){
+                InitStayPlace(lat,lon,edge);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**if data is not exist, add init data**/
+    private void InitStayPlace(double lat, double lon, int edge){
+        try {
+            preparedStatement = connection.prepareStatement("INSERT INTO stayplace VALUES(?,?,?,?)");
+
+            preparedStatement.setDouble(1,lat);
+            preparedStatement.setDouble(2,lon);
+            preparedStatement.setInt(3,1);
+            preparedStatement.setInt(4,edge);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.clearParameters();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**update the same Stay Place frequency **/
+    private void UPDateStayPlace(double lat, double lon, int frequency ,int edge){
+        try {
+            preparedStatement = connection.prepareStatement("UPDATE stayplace SET frequency=? WHERE edge =" + edge +" AND (lat =" + lat +" AND lon = " + lon +")");
+
+            preparedStatement.setInt(1,frequency);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.clearParameters();
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**Get Stay Place Frequency on Edge**/
+    public int GetEdgeStayFrequency(int edge){
+
+        int Frequency = 0;
+        boolean DataExist = false;
+
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM stayplace WHERE edge =" + edge);
+
+            while(resultSet.next()){
+                Frequency = Frequency + resultSet.getInt("frequency");
+                DataExist = true;
+            }
+
+            if(!DataExist)
+                return Frequency;
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return Frequency;
+
+    }
 
 
 }

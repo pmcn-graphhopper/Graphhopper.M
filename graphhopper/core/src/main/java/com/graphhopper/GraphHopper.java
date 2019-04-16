@@ -17,8 +17,10 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.Database.DBHelper;
 import com.graphhopper.GPXUtil.GPXFilter;
 import com.graphhopper.GPXUtil.GPXParsing_Edge;
+import com.graphhopper.GPXUtil.GPXWriter;
 import com.graphhopper.GPXUtil.PointListCustom;
 import com.graphhopper.MapMatching.GPXMapMatching;
 import com.graphhopper.json.geo.JsonFeature;
@@ -57,6 +59,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -128,6 +131,7 @@ public class GraphHopper implements GraphHopperAPI {
     private PointListCustom correctPointList = new PointListCustom();
     private PointListCustom plcStayPlace = new PointListCustom();
     private Weighting MyWeighting;
+    private int TrainingTimes = 0;
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -1297,6 +1301,8 @@ public class GraphHopper implements GraphHopperAPI {
         return MyWeighting;
     }
 
+    public int getTrainingTime() { return TrainingTimes;}
+
     public ArrayList<String> GPX_Point_record(GHPoint point,String acc, String time){
 
         ArrayList<String>  GPX_Point_Array = new ArrayList<String>();
@@ -1374,10 +1380,36 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public void RealTimeMapMatching(GraphHopper graphHopper){
-
         GPXMapMatching gpxMapMatching = new GPXMapMatching(graphHopper);
         gpxMapMatching.getEntries(correctPointList);
         gpxMapMatching.WithMapMatching();
 
+    }
+
+    public void StorageStayPoint(){
+        if(plcStayPlace.size() > 0){
+            DBHelper sTorageDB = new DBHelper();
+            sTorageDB.DBConnection();
+
+            for(int e=0; e < plcStayPlace.size(); e++){
+                QueryResult qr = locationIndex.findClosest(plcStayPlace.getLat(e), plcStayPlace.getLon(e), EdgeFilter.ALL_EDGES);
+                EdgeIteratorState qrClosestEdge = qr.getClosestEdge();
+                sTorageDB.StorageSatyPlace(plcStayPlace.getLat(e),plcStayPlace.getLon(e),qrClosestEdge.getEdge());
+            }
+
+            try {
+                sTorageDB.DBClose();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void ExportGPX(){
+        if(correctPointList.size() > 5){
+            GPXWriter gpxWriter = new GPXWriter();
+            int version = gpxWriter.VersionFile()+1;
+            gpxWriter.createFile(correctPointList,version);
+        }
     }
 }

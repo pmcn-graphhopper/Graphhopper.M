@@ -48,6 +48,8 @@ public class GPXResource {
             @QueryParam("file") @DefaultValue("f") String file,
             @QueryParam("train") @DefaultValue("f") String train,
             @QueryParam("index") @DefaultValue("f") String index,
+            @QueryParam("stay") @DefaultValue("f") String stay,
+            @QueryParam("export") @DefaultValue("f") String export,
             @QueryParam("routing") @DefaultValue("f") String route){
 
         //route function
@@ -97,7 +99,19 @@ public class GPXResource {
             int GPXIndex = Integer.valueOf(index);
 
             GPXMapMatching gpxFileMapMatching = new GPXMapMatching(graphHopper);
-            gpxFileMapMatching.GPXdoImport(GPXIndex);
+
+            return Response.ok(WebHopper.JsonObject(gpxFileMapMatching.GPXdoImport(GPXIndex))).build();
+
+         //Storage Stay Place
+        } else if(stay.equalsIgnoreCase("t")) {
+
+           graphHopper.StorageStayPoint();
+
+            return Response.ok(WebHopper.GResponse()).build();
+
+        } else if(export.equalsIgnoreCase("t")) {
+
+            graphHopper.ExportGPX();
 
             return Response.ok(WebHopper.GResponse()).build();
 

@@ -138,4 +138,12 @@ public class GPXWriter {
         return FolderFile;
     }
 
+    /**determine file version**/
+    public int VersionFile(){
+        File gpxFile = new File("trackgpx/");
+        String[] list = gpxFile.list();
+
+        return list.length;
+    }
+
 }
