@@ -106,8 +106,8 @@ $(document).ready(function (e) {
     });
 
     /**web button click!!!**/
-    $("#gpx_test").click(function(){testGPX();});
-    $("#draw_line").click(function(){drawLine();});
+    //$("#gpx_test").click(function(){testGPX();});
+    //$("#draw_line").click(function(){drawLine();});
     $("#clear_route").click(function(){ClearLayer();});
     $("#routing").click(function(){RoutingLocation();});
     $("#getLocation").click(function(){Location(locationGet)});
@@ -116,6 +116,7 @@ $(document).ready(function (e) {
     $("#queryFile").click(function () {displayFile();});
     $("#selectFile").click(function () {selectFile();});
     $("#exportFile").click(function () {ExportGPXFile();});
+    $("#display_stay").click(function () {DisplayStayPoint();});
 
     var urlParams = urlTools.parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -822,6 +823,8 @@ function isProduction() {
     return host.indexOf("graphhopper.com") > 0;
 }
 
+/**test add coordinates**/
+/*
 function testGPX(){
     var gpx_lat_input = document.getElementById('gpxlat');
     var gpx_lat = gpx_lat_input.value;
@@ -859,7 +862,7 @@ function testGPX(){
 
     console.log(GPXc.GPXurl);
 
-}
+}*/
 
 function drawLine(){
 
@@ -923,7 +926,7 @@ module.exports.routing = function(routingFromLat,routingFromLon){
 /**set time to go get the location**/
 function Location(boolean) {
     if(boolean === true)
-        window.IntervalLocation = setInterval(getLocation,10000);
+        window.IntervalLocation = setInterval(getLocation,5000);
     if(boolean === false)
         clearInterval(window.IntervalLocation);
 
@@ -974,17 +977,6 @@ function showPosition(position) {
             }
             count = GPX_length;
         }
-
-
-        /**
-        if(count == 0 && count == 1)
-            path_snapped_waypoints.push(latlonArray);
-        if(count > 1)
-        {
-            path_snapped_waypoints.pop();
-            path_snapped_waypoints.push(latlonArray);
-        }**/
-
     });
     console.log(GPXc.GPXurl);
 }
@@ -1098,6 +1090,7 @@ function StorageStayPlace(){
     });
 }
 
+/**Export GPX File instruction**/
 function ExportGPXFile(){
     var GPXc = new GHCustom();
     GPXc.ExportGPXFile(0,0);
@@ -1105,6 +1098,24 @@ function ExportGPXFile(){
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
     });
+}
+
+function DisplayStayPoint(){
+    var GPXc = new GHCustom();
+    GPXc.Display(0,0);
+
+    var latlonArray = [];
+
+    GPXc.doRequest(GPXc.GPXurl, function (json) {
+        console.log(json);
+
+        var GPX_Point = json.GPX_Point;
+        for(var p = 0; p < GPX_Point.length; p++){
+            latlonArray = GPX_Point[p].split(',');
+            mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+        }
+    });
+
 }
 
 module.exports.setFlag = setFlag;

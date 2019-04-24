@@ -19,13 +19,10 @@ package com.graphhopper;
 
 import com.graphhopper.Database.DBHelper;
 import com.graphhopper.GPXUtil.GPXFilter;
-import com.graphhopper.GPXUtil.GPXParsing_Edge;
 import com.graphhopper.GPXUtil.GPXWriter;
 import com.graphhopper.GPXUtil.PointListCustom;
 import com.graphhopper.MapMatching.GPXMapMatching;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.matching.MapMatching;
-import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
@@ -131,7 +128,6 @@ public class GraphHopper implements GraphHopperAPI {
     private PointListCustom correctPointList = new PointListCustom();
     private PointListCustom plcStayPlace = new PointListCustom();
     private Weighting MyWeighting;
-    private int TrainingTimes = 0;
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -1300,8 +1296,7 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting getWeighting(){
         return MyWeighting;
     }
-
-    public int getTrainingTime() { return TrainingTimes;}
+    public boolean CheckStayPointSize(){ return plcStayPlace.size() > 0; }
 
     public ArrayList<String> GPX_Point_record(GHPoint point,String acc, String time){
 
@@ -1402,14 +1397,30 @@ public class GraphHopper implements GraphHopperAPI {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+
+            plcStayPlace.clear();
         }
     }
 
     public void ExportGPX(){
-        if(correctPointList.size() > 5){
+        if(correctPointList.size() >= 12){
             GPXWriter gpxWriter = new GPXWriter();
             int version = gpxWriter.VersionFile()+1;
             gpxWriter.createFile(correctPointList,version);
         }
+    }
+
+    public ArrayList<String> DisplayStayPoint(){
+        ArrayList<String>  StayPoint_Array = new ArrayList<String>();
+        String DisLang ;
+
+        if(plcStayPlace.size() > 0){
+            for(int j=0 ; j < plcStayPlace.size() ; j++){
+                GHPoint StayPoint = plcStayPlace.toGHPoint(j);
+                DisLang = StayPoint.getLon() + "," + StayPoint.getLat();
+                StayPoint_Array.add(DisLang);
+            }
+        }
+        return StayPoint_Array;
     }
 }

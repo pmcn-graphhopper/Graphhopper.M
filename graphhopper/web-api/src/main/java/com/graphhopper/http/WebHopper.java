@@ -24,11 +24,11 @@ public class WebHopper {
 
     private static Boolean pointsEncoded = true;
 
-    public static String encodePolyline(PointList poly, boolean includeElevation) {
+    private static String encodePolyline(PointList poly, boolean includeElevation) {
         return encodePolyline(poly, includeElevation, 1e5);
     }
 
-    public static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
+    private static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
         StringBuilder sb = new StringBuilder();
         int size = poly.getSize();
         int prevLat = 0;

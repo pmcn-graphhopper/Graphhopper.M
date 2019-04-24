@@ -506,21 +506,16 @@ public class PointListCustom implements Iterable<GHPoint3D>, PointAccess {
         if (RemoveOrder < 0 || RemoveOrder >= this.getSize()) {
             throw new IllegalArgumentException("Error removing, remove_copy order larger or smaller than PLC size.");
         }else if (!this.is3D()){
-//            throw new IllegalArgumentException("Error removing, only 3D PLE is available to use this method! ");
             for(int inew = RemoveOrder ; inew < this.getSize()-1; inew++){
                 setPLC(inew , this.getLatitude(inew+1), this.getLongitude(inew+1), 0, this.getAccuracy(inew+1), this.getTime(inew+1));
             }
-
             this.size--;
         }else{
-
             for(int inew = RemoveOrder ; inew < this.getSize()-1; inew++){
                 setPLC(inew , this.getLatitude(inew+1), this.getLongitude(inew+1), this.getElevation(inew+1), this.getAccuracy(inew+1), this.getTime(inew+1));
             }
-
             this.size--;
         }
-
     }
 
 

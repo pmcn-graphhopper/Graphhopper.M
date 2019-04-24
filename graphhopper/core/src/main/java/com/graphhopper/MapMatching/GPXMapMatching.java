@@ -120,6 +120,7 @@ public class GPXMapMatching {
         WithMapMatching();
     }
 
+    /**Training GPX Edge**/
     private void TrainGpxForDB(){
 
         DBHelper dbHelper = new DBHelper();
@@ -137,6 +138,7 @@ public class GPXMapMatching {
 
     }
 
+    /**consider to return web GPX Point Array**/
     public ArrayList<String> GPXdoImport(int version){
 
         String fileName = "TrackGPX" + version +".gpx";

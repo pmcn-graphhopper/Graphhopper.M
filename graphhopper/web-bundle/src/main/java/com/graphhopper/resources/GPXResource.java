@@ -50,6 +50,7 @@ public class GPXResource {
             @QueryParam("index") @DefaultValue("f") String index,
             @QueryParam("stay") @DefaultValue("f") String stay,
             @QueryParam("export") @DefaultValue("f") String export,
+            @QueryParam("display") @DefaultValue("f") String display,
             @QueryParam("routing") @DefaultValue("f") String route){
 
         //route function
@@ -108,13 +109,20 @@ public class GPXResource {
            graphHopper.StorageStayPoint();
 
             return Response.ok(WebHopper.GResponse()).build();
-
+        //Export gpx file
         } else if(export.equalsIgnoreCase("t")) {
 
             graphHopper.ExportGPX();
 
             return Response.ok(WebHopper.GResponse()).build();
 
+        //Display Stay Point
+        } else if(display.equalsIgnoreCase("t")) {
+
+            if(graphHopper.CheckStayPointSize())
+                return Response.ok(WebHopper.JsonObject(graphHopper.DisplayStayPoint())).build();
+            else
+                return Response.ok(WebHopper.GResponse()).build();
         }
         else {
 

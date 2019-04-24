@@ -8,6 +8,7 @@ var GHCustom = function () {
   this.elevation = false;
 };
 
+/**test only**/
 GHCustom.prototype.createGPXURL = function(lat,lon){
    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon ;
 };
@@ -16,6 +17,7 @@ GHCustom.prototype.route = function(fromlat,fromlon,tolat,tolon){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + fromlat + "%2C" +fromlon + "&point=" + tolat + "%2C" + tolon + "&routing=t";
 }
 
+/**real use**/
 GHCustom.prototype.createGPXNode = function(lat,lon,acc,time){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&accuracy=" + acc +"&time=" +time ;
 };
@@ -47,6 +49,11 @@ GHCustom.prototype.StorageStayPlace = function(lat,lon){
 GHCustom.prototype.TrainFile = function(lat,lon,index){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&train=t&index="+index;
 }
+
+GHCustom.prototype.Display = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&display=t";
+}
+
 
 GHCustom.prototype.doRequest = function (url ,callback) {
     var that = this;

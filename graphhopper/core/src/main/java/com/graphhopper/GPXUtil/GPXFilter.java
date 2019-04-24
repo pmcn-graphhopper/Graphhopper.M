@@ -28,7 +28,7 @@ public class GPXFilter {
                 double limitMaxSpeed = 100;
                 double NoMove = 0;
                 double NowSpeed = getSpeed(plc_input,k,k+1);
-                if( NowSpeed < limitMaxSpeed && NowSpeed != NoMove && AccuarcyWithFilter(plc_input,k)){
+                if( NowSpeed < limitMaxSpeed && NowSpeed != NoMove && AccuracyWithFilter(plc_input,k)){
                     FilteredPointList.add(plc_input.getLat(k),plc_input.getLon(k),plc_input.getEle(k),plc_input.getAccuracy(k),plc_input.getTime(k));
                 }
 
@@ -69,7 +69,7 @@ public class GPXFilter {
         return Speed;
     }
 
-    private boolean AccuarcyWithFilter(PointListCustom plc_input,int index){
+    private boolean AccuracyWithFilter(PointListCustom plc_input,int index){
 
         if(plc_input.size <=10){
             System.out.println("current point Accuracy:" + plc_input.getAccuracy(index));
@@ -110,15 +110,15 @@ public class GPXFilter {
         int PreviousGPXIndex = plc_input.size() - 2;
         // distance from calc current place - previous place
         double distance = distanceCalcEarth.calcDist(plc_input.getLat(PreviousGPXIndex),plc_input.getLon(PreviousGPXIndex),plc_input.getLat(CurrentGPXIndex),plc_input.getLon(CurrentGPXIndex));
-        int stayCheckDistance = 50;
-        int stayCheckTime = 3;
+        int stayCheckDistance = 60;
+        int stayCheckTime = 10;
         long PreviousTime =0;
         long CurrentTime=0;
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         PointListCustom plcStayPlace = new PointListCustom();
 
-        //if distance < 50m
+        //if distance < 60m
         if(distance < stayCheckDistance){
             //check to stay place when to start
             for(int TrackPrev = PreviousGPXIndex -1 ; TrackPrev > 0 ; TrackPrev--){
@@ -154,7 +154,7 @@ public class GPXFilter {
 
         PointListCustom plc_SamePoint_Filtered;
         plc_SamePoint_Filtered = plc_stay.clone(false);
-        int FilterSameDistance = 40;
+        int FilterSameDistance = 60;
         int plc_stay_size = plc_stay.size();
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -180,6 +180,7 @@ public class GPXFilter {
                     plc_SamePoint_Filtered.remove(plc_everyCheck);
                     plc_everyCheck--;
                     plc_stay_size = plc_SamePoint_Filtered.size();
+                    System.out.println("remove successful :" + plc_everyCheck);
                 }
             }
         }

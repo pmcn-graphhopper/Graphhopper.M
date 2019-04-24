@@ -1,6 +1,7 @@
 package com.graphhopper.Database;
 
 import com.graphhopper.GPXUtil.GPXTraining;
+import com.graphhopper.GraphHopper;
 
 import java.io.IOException;
 import java.sql.*;
@@ -18,6 +19,7 @@ public class DBHelper {
     private PreparedStatement preparedStatement;
     private Statement statement;
     private GPXTraining gpxTraining = new GPXTraining();
+
 
     public void DBConnection() {
 
@@ -61,50 +63,17 @@ public class DBHelper {
         }
     }
 
-
-    /**init training times**/
-    public void InitTrainingTimes(){
-        try {
-            preparedStatement = connection.prepareStatement("INSERT INTO training VALUES(?)");
-
-            preparedStatement.setInt(1,0);
-            preparedStatement.executeUpdate();
-            preparedStatement.clearParameters();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int adjustInitTimes(){
-
-        int times =1;
-
-        try {
-            ResultSet resultSet = preparedStatement.executeQuery("SELECT * FROM training WHERE TrainingTimes = 0");
-
-            while (resultSet.next()){
-                times = 0;
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return times;
-    }
-
-
     /**get Current Training Times**/
-    public int getTrainingTimes(){
-
-        int times =0;
+    private int getTrainingTimes(){
+        int times = 0,DBtimes;
 
         try {
-            ResultSet resultSet = preparedStatement.executeQuery("SELECT TrainingTimes FROM training");
+            ResultSet resultSet = statement.executeQuery("SELECT CurrentTrain FROM gpx");
 
             while (resultSet.next()){
-                times = resultSet.getInt("TrainingTimes");
+                DBtimes = resultSet.getInt("CurrentTrain");
+                if(DBtimes > times)
+                    times = DBtimes;
             }
 
         } catch (SQLException e) {
@@ -122,8 +91,9 @@ public class DBHelper {
 
             while (resultSet.next()){
                 System.out.print(resultSet.getInt(1) + "\t");
-                System.out.print(resultSet.getInt(2) + "\t");
+                System.out.print(resultSet.getDouble(2) + "\t");
                 System.out.print(resultSet.getInt(3) + "\t");
+                System.out.print(resultSet.getInt(4) + "\t");
             }
 
         } catch (SQLException e) {
@@ -135,6 +105,7 @@ public class DBHelper {
 
         boolean DataExist = false;
         double EdgeWeighting;
+        int Time = getTrainingTimes();
 
         for(int id =0; id < EdgeID.size(); id++){
             try {
@@ -142,8 +113,8 @@ public class DBHelper {
 
                 while(resultSet.next()){
                     EdgeWeighting = resultSet.getDouble("weighting");
-                    EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting,resultSet.getInt("CurrentTrain"),resultSet.getInt("LastTrain"));
-                    DBUpdate(resultSet.getInt("edge"),EdgeWeighting,resultSet.getInt("CurrentTrain")+1,resultSet.getInt("LastTrain")+1);
+                    EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting,Time,resultSet.getInt("LastTrain"));
+                    DBUpdate(resultSet.getInt("edge"),EdgeWeighting,Time+1,resultSet.getInt("LastTrain")+1);
                     DataExist = true;
                 }
 
