@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper version 7" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>1970-01-01T00:00:00Z</time></metadata>
+<trk><name>GraphHopper GPX Track</name><trkseg>
+<trkpt lat="22.984868" lon="120.214774"><time>2019-05-09T15:54:30Z</time></trkpt>
+<trkpt lat="22.992709" lon="120.211611"><time>2019-05-09T15:58:05Z</time></trkpt>
+<trkpt lat="22.997046" lon="120.211957"><time>2019-05-09T15:58:25Z</time></trkpt>
+<trkpt lat="22.997541" lon="120.211713"><time>2019-05-09T15:58:45Z</time></trkpt>
+<trkpt lat="22.998187" lon="120.207236"><time>2019-05-09T15:59:35Z</time></trkpt>
+<trkpt lat="22.998187" lon="120.207236"><time>2019-05-09T15:59:40Z</time></trkpt>
+<trkpt lat="22.998187" lon="120.207235"><time>2019-05-09T15:59:45Z</time></trkpt>
+<trkpt lat="22.998187" lon="120.207235"><time>2019-05-09T15:59:50Z</time></trkpt>
+<trkpt lat="22.999097" lon="120.203248"><time>2019-05-09T16:00:10Z</time></trkpt>
+<trkpt lat="22.999097" lon="120.203247"><time>2019-05-09T16:00:15Z</time></trkpt>
+<trkpt lat="22.998924" lon="120.202007"><time>2019-05-09T16:00:20Z</time></trkpt>
+<trkpt lat="22.998911" lon="120.201993"><time>2019-05-09T16:00:30Z</time></trkpt>
+<trkpt lat="22.998907" lon="120.201987"><time>2019-05-09T16:00:35Z</time></trkpt>
+<trkpt lat="22.998904" lon="120.201985"><time>2019-05-09T16:00:40Z</time></trkpt>
+<trkpt lat="22.998588" lon="120.200688"><time>2019-05-09T16:00:50Z</time></trkpt>
+<trkpt lat="22.998612" lon="120.200647"><time>2019-05-09T16:01:00Z</time></trkpt>
+<trkpt lat="22.998914" lon="120.200249"><time>2019-05-09T16:01:20Z</time></trkpt>
+<trkpt lat="22.99893" lon="120.200243"><time>2019-05-09T16:01:30Z</time></trkpt>
+<trkpt lat="22.998932" lon="120.200242"><time>2019-05-09T16:01:35Z</time></trkpt>
+<trkpt lat="22.999636" lon="120.199782"><time>2019-05-09T16:01:55Z</time></trkpt>
+<trkpt lat="23.000641" lon="120.200015"><time>2019-05-09T16:02:15Z</time></trkpt>
+<trkpt lat="23.001085" lon="120.200013"><time>2019-05-09T16:02:35Z</time></trkpt>
+<trkpt lat="23.001103" lon="120.2"><time>2019-05-09T16:02:55Z</time></trkpt>
+<trkpt lat="23.001071" lon="120.200003"><time>2019-05-09T16:03:00Z</time></trkpt>
+</trkseg>
+</trk>
+</gpx>

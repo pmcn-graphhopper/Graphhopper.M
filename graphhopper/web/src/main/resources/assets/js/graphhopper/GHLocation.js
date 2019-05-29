@@ -1,4 +1,6 @@
 
+/**get routing current gps node*/
+
 var mainTemplate = require('../main-template.js');
 
 var GHLocation = function () {

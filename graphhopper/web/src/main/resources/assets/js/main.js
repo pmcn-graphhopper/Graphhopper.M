@@ -42991,6 +42991,8 @@ module.exports = GHInput;
 
 },{}],15:[function(require,module,exports){
 
+/**get routing current gps node*/
+
 var mainTemplate = require('../main-template.js');
 
 var GHLocation = function () {
@@ -44758,6 +44760,7 @@ var metaVersionInfo;
 var path_point = [];
 var path_snapped_waypoints = [];
 var count =0;
+var initCount =0;
 
 var locationGet = true;
 var locationStop = false;
@@ -44817,6 +44820,7 @@ $(document).ready(function (e) {
     $("#selectFile").click(function () {selectFile();});
     $("#exportFile").click(function () {ExportGPXFile();});
     $("#display_stay").click(function () {DisplayStayPoint();});
+    $("#trajectory").click(function () {DisplayRouteTrajectory();});
 
     var urlParams = urlTools.parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -45593,6 +45597,7 @@ function RoutingLocation() {
     var GHloc = new GHLocation();
     GHloc.getLocation();
 }
+
 /**navigation**/
 module.exports.routing = function(routingFromLat,routingFromLon){
 
@@ -45625,8 +45630,16 @@ module.exports.routing = function(routingFromLat,routingFromLon){
 
 /**set time to go get the location**/
 function Location(boolean) {
-    if(boolean === true)
+
+    /**set init 10 sec sampling rate 1 hz**/
+    if(boolean === true && initCount === 0)
+        window.IntervalLocation = setInterval(getLocation,1000);
+
+    if(boolean === true && initCount >= 16){
+        clearInterval(window.IntervalLocation);
         window.IntervalLocation = setInterval(getLocation,5000);
+    }
+
     if(boolean === false)
         clearInterval(window.IntervalLocation);
 
@@ -45662,7 +45675,6 @@ function showPosition(position) {
     var GPXc = new GHCustom();
     GPXc.createGPXNode(position.coords.latitude,position.coords.longitude,position.coords.accuracy,time)
     GPXc.doRequest(GPXc.GPXurl, function (json) {
-        console.log("this is json");
         console.log(json);
 
         var GPX_Point =json.GPX_Point;
@@ -45678,7 +45690,15 @@ function showPosition(position) {
             count = GPX_length;
         }
     });
+
+    drawLine();
     console.log(GPXc.GPXurl);
+
+    if(initCount < 17)
+        initCount++;
+    if(initCount === 16)
+        Location(true);
+
 }
 
 /**callback function to fail**/
@@ -45708,7 +45728,6 @@ function sleep(sec){
 }
 
 /**Map Matching**/
-
 function MapMatching(){
     var GPXc = new GHCustom();
     GPXc.MapMatching(0,0);
@@ -45800,6 +45819,7 @@ function ExportGPXFile(){
     });
 }
 
+
 function DisplayStayPoint(){
     var GPXc = new GHCustom();
     GPXc.Display(0,0);
@@ -45808,7 +45828,6 @@ function DisplayStayPoint(){
 
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
-
         var GPX_Point = json.GPX_Point;
         for(var p = 0; p < GPX_Point.length; p++){
             latlonArray = GPX_Point[p].split(',');
@@ -45816,6 +45835,10 @@ function DisplayStayPoint(){
         }
     });
 
+}
+
+function DisplayRouteTrajectory(){
+    drawLine();
 }
 
 module.exports.setFlag = setFlag;

@@ -1,0 +1,9 @@
+crt檔案要轉成可以用的jks格式
+1.在 cygwin64模式下，切換到certificate.crt的資料夾下
+2.輸入 openssl pkcs12 -export -in certificate.crt -inkey privatekey.key -out to.p12 -name "alias"
+3.這時候會被要求輸入 export password: nutnpmcn(隨意，等等會用到)
+4.成功會出現to.p12檔案
+5.接著用to.p12檔案轉乘jks
+6.輸入 keytool -importkeystore -srckeystore to.p12 -srcstoretype PKCS12 -deststoretype JKS -destkeystore keystore.jks
+7.輸入剛剛的export password
+8.輸出 keystore.jks 表示成功

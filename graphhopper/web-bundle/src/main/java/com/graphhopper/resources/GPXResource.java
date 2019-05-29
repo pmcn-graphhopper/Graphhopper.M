@@ -127,7 +127,7 @@ public class GPXResource {
         else {
 
             GHPoint GpxPoint = gpxPoints.get(0);
-            GPX_Point_Array = graphHopper.GPX_Point_record(GpxPoint,acc,time);
+            GPX_Point_Array = graphHopper.GPS_Point_record(GpxPoint,acc,time);
 
             return Response.ok(WebHopper.JsonObject(GPX_Point_Array)).build();
         }

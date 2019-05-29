@@ -26,7 +26,6 @@ public class MyCustomWeighting extends AbstractWeighting {
     private final double maxSpeed;
     private DBHelper dbHelper;
 
-
     public MyCustomWeighting(FlagEncoder encoder, PMap map) {
         super(encoder);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
@@ -36,7 +35,6 @@ public class MyCustomWeighting extends AbstractWeighting {
         dbHelper.DBConnection();
 
     }
-
 
     @Override
     public double getMinWeight(double distance) {
@@ -63,7 +61,8 @@ public class MyCustomWeighting extends AbstractWeighting {
         //System.out.println(edge.getDistance() / Math.exp(weightingAlpha));
         //System.out.println(" ");
 
-        return 0.5 * ((edge.getDistance() / SPEED_CONV) / Math.exp(weightingAlpha)) * (1 / (1 + frequency));
+
+        return ((edge.getDistance() / 3600) / Math.exp(weightingAlpha) * 2) * (1 / (1 + frequency));
     }
 
     @Override

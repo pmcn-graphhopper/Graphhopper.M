@@ -128,6 +128,7 @@ public class GraphHopper implements GraphHopperAPI {
     private PointListCustom correctPointList = new PointListCustom();
     private PointListCustom plcStayPlace = new PointListCustom();
     private Weighting MyWeighting;
+    private boolean InitFlag = true;
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -936,7 +937,6 @@ public class GraphHopper implements GraphHopperAPI {
             weighting = new ShortFastestWeighting(encoder, hintsMap);
         }
           else if("MyCustomWeighting".equalsIgnoreCase(weightingStr)){
-            //System.out.print("MyCustom");
             weighting = new MyCustomWeighting(encoder, hintsMap);
         }
 
@@ -1298,49 +1298,63 @@ public class GraphHopper implements GraphHopperAPI {
     }
     public boolean CheckStayPointSize(){ return plcStayPlace.size() > 0; }
 
-    public ArrayList<String> GPX_Point_record(GHPoint point,String acc, String time){
+    /**add GPS Point**/
+    public ArrayList<String> GPS_Point_record(GHPoint point,String acc, String time){
 
-        ArrayList<String>  GPX_Point_Array = new ArrayList<String>();
-        String swlang;
+        ArrayList<String> GPX_Point_Array = new ArrayList<String>();
+        GPXFilter gpxFilter = new GPXFilter();
         PointListCustom DetectSatyPlace = new PointListCustom();
-
 
         pointList.add(point,Double.parseDouble(acc),time);
 
-        //filter class
-        if(pointList.size() >= 2){
-            GPXFilter gpxFilter = new GPXFilter();
-            correctPointList = gpxFilter.FilterSpeedWithAcc(pointList);
-
-            // return Filter after GPX List
-            if(correctPointList.size() > 0){
-                for(int j=0 ; j < correctPointList.size() ; j++){
-                    GHPoint GPX_point = correctPointList.toGHPoint(j);
-                    swlang = GPX_point.getLon() + "," + GPX_point.getLat();
-                    GPX_Point_Array.add(swlang);
-                }
-                System.out.println("Correct Point List :" + GPX_Point_Array);
+        /**Initial phase**/
+        if(InitFlag && pointList.size() ==16){
+            pointList = gpxFilter.GpsInitWindows(pointList);
+            if(pointList.size() >= 1){
+                for(int i=0; i < pointList.size(); i++)
+                    correctPointList.add(pointList.getLat(i),pointList.getLon(i),pointList.getEle(i),pointList.getAccuracy(i),pointList.getTime(i));
             }
 
-            //detect stay place point
-            if(correctPointList.size() >=3){
-                DetectSatyPlace = gpxFilter.PlaceStayCheck(correctPointList);
-                // Only get One Stay Place
-                if(DetectSatyPlace.size() > 0)
-                    plcStayPlace.add(DetectSatyPlace.getLat(0),DetectSatyPlace.getLon(0),Double.NaN,0,DetectSatyPlace.getTime(0));
-
-                System.out.println("Add After Stay Place :" + plcStayPlace);
-                plcStayPlace = gpxFilter.SamePointFiltered(plcStayPlace);
-                System.out.println("Filter Same Point After Stay Place :" + plcStayPlace);
-                System.out.println(" ");
+            //return Initial GPS Point List
+            for(int e=0; e < correctPointList.size(); e++){
+                GPX_Point_Array.add(correctPointList.getLon(e)+","+correctPointList.getLat(e));
             }
+            InitFlag = false;
         }
-        else{
-            // return first gpx point
-            for(int k=0;k<pointList.size();k++){
-                GHPoint GPX_point = pointList.toGHPoint(k);
-                swlang = GPX_point.getLon() + "," +GPX_point.getLat();
-                GPX_Point_Array.add(swlang);
+
+        /**Robustness phase**/
+        if(!InitFlag){
+            //filter class
+            if(pointList.size() >= 2){
+                int s = pointList.size()-1;
+                if(gpxFilter.FilterSpeedWithAcc(pointList, correctPointList, s))
+                    correctPointList.add(pointList.getLat(s),pointList.getLon(s),pointList.getEle(s),pointList.getAccuracy(s),pointList.getTime(s));
+
+                // return Filter after GPX Point List
+                if(correctPointList.size() > 0){
+                    for(int j=0 ; j < correctPointList.size() ; j++){
+                        GPX_Point_Array.add(correctPointList.getLon(j)+","+correctPointList.getLat(j));
+                    }
+                    System.out.println("Correct Point List size: " + correctPointList.size() + " Correct Point List: " + GPX_Point_Array);
+                    System.out.println(" ");
+                }
+
+                /**detect stay place poin**/
+                if(correctPointList.size() >= 2){
+                    DetectSatyPlace = gpxFilter.PlaceStayCheck(correctPointList);
+                    // Only get One Stay Place
+                    if(DetectSatyPlace.size() > 0)
+                        plcStayPlace.add(DetectSatyPlace.getLat(0),DetectSatyPlace.getLon(0),Double.NaN,0,DetectSatyPlace.getTime(0));
+
+                    //System.out.println("Add After Stay Place :" + plcStayPlace);
+                    plcStayPlace = gpxFilter.SamePointFiltered(plcStayPlace);
+                    System.out.println("Filter Same Point After Stay Place :" + plcStayPlace);
+                    System.out.println(" ");
+                }
+
+            }
+            else{
+                GPX_Point_Array.add(pointList.getLon(0)+","+pointList.getLat(0));
             }
         }
 
@@ -1412,13 +1426,9 @@ public class GraphHopper implements GraphHopperAPI {
 
     public ArrayList<String> DisplayStayPoint(){
         ArrayList<String>  StayPoint_Array = new ArrayList<String>();
-        String DisLang ;
-
         if(plcStayPlace.size() > 0){
             for(int j=0 ; j < plcStayPlace.size() ; j++){
-                GHPoint StayPoint = plcStayPlace.toGHPoint(j);
-                DisLang = StayPoint.getLon() + "," + StayPoint.getLat();
-                StayPoint_Array.add(DisLang);
+                StayPoint_Array.add(plcStayPlace.getLon(j)+","+plcStayPlace.getLat(j));
             }
         }
         return StayPoint_Array;
