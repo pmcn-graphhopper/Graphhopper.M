@@ -23,6 +23,7 @@ import com.graphhopper.GPXUtil.GPXWriter;
 import com.graphhopper.GPXUtil.PointListCustom;
 import com.graphhopper.MapMatching.GPXMapMatching;
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.matching.GPXFile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
@@ -58,6 +59,8 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -124,11 +127,15 @@ public class GraphHopper implements GraphHopperAPI {
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
+    private DistanceCalcEarth distanceCalcEarth = new DistanceCalcEarth();
     private PointListCustom pointList = new PointListCustom();
     private PointListCustom correctPointList = new PointListCustom();
     private PointListCustom plcStayPlace = new PointListCustom();
     private Weighting MyWeighting;
+    private BBox DynamicBBox;
     private boolean InitFlag = true;
+    private int boxIndex = 0;
+    private int InitBox = 0;
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -1297,6 +1304,7 @@ public class GraphHopper implements GraphHopperAPI {
         return MyWeighting;
     }
     public boolean CheckStayPointSize(){ return plcStayPlace.size() > 0; }
+    public boolean CheckTrajectorySize(){ return correctPointList.size() > 0; }
 
     /**add GPS Point**/
     public ArrayList<String> GPS_Point_record(GHPoint point,String acc, String time){
@@ -1308,7 +1316,7 @@ public class GraphHopper implements GraphHopperAPI {
         pointList.add(point,Double.parseDouble(acc),time);
 
         /**Initial phase**/
-        if(InitFlag && pointList.size() ==16){
+        if(InitFlag && pointList.size() ==24){
             pointList = gpxFilter.GpsInitWindows(pointList);
             if(pointList.size() >= 1){
                 for(int i=0; i < pointList.size(); i++)
@@ -1319,6 +1327,10 @@ public class GraphHopper implements GraphHopperAPI {
             for(int e=0; e < correctPointList.size(); e++){
                 GPX_Point_Array.add(correctPointList.getLon(e)+","+correctPointList.getLat(e));
             }
+
+            //build bound BBox, init boxIndex=0
+            //DynamicBBox = distanceCalcEarth.createBBox(correctPointList.getLat(boxIndex),correctPointList.getLon(boxIndex),400);
+            //System.out.println(DynamicBBox.maxLat + "," + DynamicBBox.maxLon + " - " + DynamicBBox.minLat + "," + DynamicBBox.minLon);
             InitFlag = false;
         }
 
@@ -1327,8 +1339,12 @@ public class GraphHopper implements GraphHopperAPI {
             //filter class
             if(pointList.size() >= 2){
                 int s = pointList.size()-1;
-                if(gpxFilter.FilterSpeedWithAcc(pointList, correctPointList, s))
-                    correctPointList.add(pointList.getLat(s),pointList.getLon(s),pointList.getEle(s),pointList.getAccuracy(s),pointList.getTime(s));
+
+                if(distanceCalcEarth.calcDist(pointList.getLat(s-1),pointList.getLon(s-1),pointList.getLat(s),pointList.getLon(s)) == 0)
+                    pointList.remove(s);
+                else
+                    if(gpxFilter.FilterSpeedWithAcc(pointList, correctPointList, s))
+                        correctPointList.add(pointList.getLat(s),pointList.getLon(s),pointList.getEle(s),pointList.getAccuracy(s),pointList.getTime(s));
 
                 // return Filter after GPX Point List
                 if(correctPointList.size() > 0){
@@ -1343,18 +1359,17 @@ public class GraphHopper implements GraphHopperAPI {
                 if(correctPointList.size() >= 2){
                     DetectSatyPlace = gpxFilter.PlaceStayCheck(correctPointList);
                     // Only get One Stay Place
-                    if(DetectSatyPlace.size() > 0)
+                    if(DetectSatyPlace.size() > 0){
                         plcStayPlace.add(DetectSatyPlace.getLat(0),DetectSatyPlace.getLon(0),Double.NaN,0,DetectSatyPlace.getTime(0));
 
-                    //System.out.println("Add After Stay Place :" + plcStayPlace);
-                    plcStayPlace = gpxFilter.SamePointFiltered(plcStayPlace);
-                    System.out.println("Filter Same Point After Stay Place :" + plcStayPlace);
-                    System.out.println(" ");
+                        //System.out.println("Add After Stay Place :" + plcStayPlace);
+                        plcStayPlace = gpxFilter.SamePointFiltered(plcStayPlace);
+                        System.out.println("Filter Same Point After Stay Place :" + plcStayPlace);
+                        System.out.println(" ");
+                    }
+
                 }
 
-            }
-            else{
-                GPX_Point_Array.add(pointList.getLon(0)+","+pointList.getLat(0));
             }
         }
 
@@ -1433,4 +1448,96 @@ public class GraphHopper implements GraphHopperAPI {
         }
         return StayPoint_Array;
     }
+
+    public ArrayList<String> DisplayTrajectory(){
+        ArrayList<String>  Trajectory_Array = new ArrayList<String>();
+        if(correctPointList.size() > 0){
+            for(int j=0 ; j < correctPointList.size() ; j++){
+                Trajectory_Array.add(correctPointList.getLon(j)+","+correctPointList.getLat(j));
+            }
+            System.out.println(Trajectory_Array);
+        }
+        return Trajectory_Array;
+    }
+
+    /**return file gpx raw trajectory**/
+    public ArrayList<String> gpxTrajectory(int version){
+
+        List<GPXEntry> Entries = new ArrayList<>();
+        ArrayList<String> rawGPX_Array = new ArrayList<String>();
+
+        String fileName = "TrackGPX" + version +".gpx";
+
+        GPXFile gpxFile = new GPXFile();
+        Entries = gpxFile.doImport("trackgpx/"+ fileName).getEntries();
+
+        for (GPXEntry entry : Entries) {
+            rawGPX_Array.add(entry.lon + "," + entry.lat);
+        }
+
+        return rawGPX_Array;
+    }
+
+    public ArrayList<Double> getBBoxBounds(){
+        ArrayList<Double> BBox_Array = new ArrayList<>();
+
+        if(DynamicBBox != null){
+            BBox_Array.add(0,DynamicBBox.maxLat);
+            BBox_Array.add(1,DynamicBBox.maxLon);
+            BBox_Array.add(2,DynamicBBox.minLat);
+            BBox_Array.add(3,DynamicBBox.minLon);
+
+            return  BBox_Array;
+        }
+        else
+            return BBox_Array;
+    }
+
+    public boolean CheckIfBBoxChange(){
+        int ListSize = correctPointList.size();
+        // first bounding box
+        if(pointList.size() == correctPointList.size())
+            return true;
+        if(ListSize > 1){
+            double UpdateDistance = distanceCalcEarth.calcDist(correctPointList.getLat(boxIndex),correctPointList.getLon(boxIndex),correctPointList.getLat(ListSize-1),correctPointList.getLon(ListSize-1));
+            if (UpdateDistance > 1000){
+                DynamicBBox = distanceCalcEarth.createBBox(correctPointList.getLat(ListSize-1),correctPointList.getLon(ListSize-1),500 + UpdateDistance);
+                boxIndex = ListSize -1;
+                System.out.println("Bounding box Update Distance: " + UpdateDistance);
+                return true;
+            } else return false;
+        }
+        else
+            return false;
+    }
+
+    public ArrayList<Double> getDisBBoxBounds(String s){
+        ArrayList<Double> BBox_Array = new ArrayList<>();
+        BBox DisplayBBox;
+
+        if(s.equalsIgnoreCase("trajectory")) {
+            if (correctPointList.size() > 0) {
+                DisplayBBox = distanceCalcEarth.createBBox(correctPointList.getLat(correctPointList.size() - 1), correctPointList.getLon(correctPointList.size() - 1), 400);
+
+                BBox_Array.add(0, DisplayBBox.maxLat);
+                BBox_Array.add(1, DisplayBBox.maxLon);
+                BBox_Array.add(2, DisplayBBox.minLat);
+                BBox_Array.add(3, DisplayBBox.minLon);
+            }
+        }
+
+        if(s.equalsIgnoreCase("stay")) {
+            if (plcStayPlace.size() > 0) {
+                DisplayBBox = distanceCalcEarth.createBBox(plcStayPlace.getLat(plcStayPlace.size() - 1), plcStayPlace.getLon(plcStayPlace.size() - 1), 500);
+
+                BBox_Array.add(0, DisplayBBox.maxLat);
+                BBox_Array.add(1, DisplayBBox.maxLon);
+                BBox_Array.add(2, DisplayBBox.minLat);
+                BBox_Array.add(3, DisplayBBox.minLon);
+            }
+        }
+
+        return BBox_Array;
+    }
+
 }

@@ -51,6 +51,8 @@ public class GPXResource {
             @QueryParam("stay") @DefaultValue("f") String stay,
             @QueryParam("export") @DefaultValue("f") String export,
             @QueryParam("display") @DefaultValue("f") String display,
+            @QueryParam("trajectory") @DefaultValue("f") String trajectory,
+            @QueryParam("rawTrajectory") @DefaultValue("f") String rawFileTrajectory,
             @QueryParam("routing") @DefaultValue("f") String route){
 
         //route function
@@ -120,15 +122,32 @@ public class GPXResource {
         } else if(display.equalsIgnoreCase("t")) {
 
             if(graphHopper.CheckStayPointSize())
-                return Response.ok(WebHopper.JsonObject(graphHopper.DisplayStayPoint())).build();
+                return Response.ok(WebHopper.JsonObjectV2(graphHopper.DisplayStayPoint(),graphHopper.getDisBBoxBounds("stay"))).build();
             else
                 return Response.ok(WebHopper.GResponse()).build();
+
+        //Display GPX Trajectory
+        } else if(trajectory.equalsIgnoreCase("t")) {
+
+            if(graphHopper.CheckTrajectorySize())
+                return Response.ok(WebHopper.JsonObjectV2(graphHopper.DisplayTrajectory(),graphHopper.getDisBBoxBounds("trajectory"))).build();
+            else
+                return Response.ok(WebHopper.GResponse()).build();
+
+        } else if(rawFileTrajectory.equalsIgnoreCase("t")) {
+
+            int GPXIndex = Integer.valueOf(index);
+
+            return Response.ok(WebHopper.JsonObject(graphHopper.gpxTrajectory(GPXIndex))).build();
         }
         else {
 
             GHPoint GpxPoint = gpxPoints.get(0);
             GPX_Point_Array = graphHopper.GPS_Point_record(GpxPoint,acc,time);
 
+            //if(graphHopper.CheckIfBBoxChange())
+            //    return Response.ok(WebHopper.JsonObjectV2(GPX_Point_Array,graphHopper.getBBoxBounds())).build();
+            //else
             return Response.ok(WebHopper.JsonObject(GPX_Point_Array)).build();
         }
     }

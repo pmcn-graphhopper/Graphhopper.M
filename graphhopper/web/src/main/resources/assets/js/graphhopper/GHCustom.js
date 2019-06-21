@@ -50,8 +50,16 @@ GHCustom.prototype.TrainFile = function(lat,lon,index){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&train=t&index="+index;
 }
 
-GHCustom.prototype.Display = function(lat,lon){
+GHCustom.prototype.DisplayStay = function(lat,lon){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&display=t";
+}
+
+GHCustom.prototype.DisplayTrajectory = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&trajectory=t";
+}
+
+GHCustom.prototype.DisplayFileTrajectory = function(lat,lon,index){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&rawTrajectory=t&index="+index;
 }
 
 

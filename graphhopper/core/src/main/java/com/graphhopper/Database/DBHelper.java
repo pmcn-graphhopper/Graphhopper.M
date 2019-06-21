@@ -46,14 +46,15 @@ public class DBHelper {
         }
     }
 
-    private void DBWrite(int edgeId){
+    private void DBWrite(int edgeId, String time){
         try {
-            preparedStatement = connection.prepareStatement("INSERT INTO gpx VALUES(?,?,?,?)");
+            preparedStatement = connection.prepareStatement("INSERT INTO gpx VALUES(?,?,?,?,?)");
 
             preparedStatement.setInt(1,edgeId);
             preparedStatement.setDouble(2,0);
             preparedStatement.setInt(3,1);
             preparedStatement.setInt(4,1);
+            preparedStatement.setString(5,time);
 
             preparedStatement.executeUpdate();
             preparedStatement.clearParameters();
@@ -101,11 +102,12 @@ public class DBHelper {
         }
     }
 
-    public void TrainEdgeWeighting(ArrayList<Integer> EdgeID){
+    public void TrainEdgeWeighting(ArrayList<Integer> EdgeID, String nowTime){
 
         boolean DataExist = false;
         double EdgeWeighting;
-        int Time = getTrainingTimes();
+        int Times = getTrainingTimes();
+        String Record;
 
         for(int id =0; id < EdgeID.size(); id++){
             try {
@@ -113,14 +115,15 @@ public class DBHelper {
 
                 while(resultSet.next()){
                     EdgeWeighting = resultSet.getDouble("weighting");
-                    EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting,Time,resultSet.getInt("LastTrain"));
-                    DBUpdate(resultSet.getInt("edge"),EdgeWeighting,Time+1,resultSet.getInt("LastTrain")+1);
+                    Record = resultSet.getString("ReTime");
+                    EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting,Times,resultSet.getInt("LastTrain"),Record);
+                    DBUpdate(resultSet.getInt("edge"),EdgeWeighting,Times+1,resultSet.getInt("LastTrain")+1,nowTime);
                     DataExist = true;
                 }
 
                 if(!DataExist){
                     //System.out.println("NOT Value Edge: " + EdgeID.get(id));
-                    DBWrite(EdgeID.get(id));
+                    DBWrite(EdgeID.get(id),nowTime);
                 }
 
                 DataExist = false;
@@ -132,14 +135,15 @@ public class DBHelper {
         }
     }
 
-    private void DBUpdate(int edgeId, double weight, int current_time, int last_time){
+    private void DBUpdate(int edgeId, double weight, int current_time, int last_time, String record){
         try {
-            preparedStatement = connection.prepareStatement("UPDATE gpx SET edge=?, weighting=?, CurrentTrain=?, LastTrain=? WHERE edge="+ edgeId);
+            preparedStatement = connection.prepareStatement("UPDATE gpx SET edge=?, weighting=?, CurrentTrain=?, LastTrain=?, ReTime=? WHERE edge="+ edgeId);
 
             preparedStatement.setInt(1,edgeId);
             preparedStatement.setDouble(2,weight);
             preparedStatement.setInt(3,current_time);
             preparedStatement.setInt(4,last_time);
+            preparedStatement.setString(5,record);
 
             preparedStatement.executeUpdate();
             preparedStatement.clearParameters();

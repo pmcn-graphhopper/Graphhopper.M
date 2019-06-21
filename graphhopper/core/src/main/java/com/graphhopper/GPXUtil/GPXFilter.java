@@ -1,8 +1,6 @@
 package com.graphhopper.GPXUtil;
 
-import com.graphhopper.util.DistanceCalc2D;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.PointList;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -19,14 +17,22 @@ public class GPXFilter {
 
     private long fromPointTime =0;
     private long toPointTime =0;
+    private int DynamicWindowSize =12;
 
     public boolean FilterSpeedWithAcc(PointListCustom plc_input,PointListCustom plc_correct,int index){
 
         double limitMaxSpeed = 100;
-        double NoMove = 0;
+        double SpeedToAverage = 0;
         double NowSpeed = getSpeed(plc_input,plc_correct,plc_correct.size()-1,index);
 
-        return NowSpeed < limitMaxSpeed && NowSpeed != NoMove && AccuracyWithFilter(plc_input,index) && TooClosePoint(plc_input,plc_correct,index);
+        if(plc_input.size() > DynamicWindowSize){
+            SpeedToAverage = SpeedAverage(plc_input,index);
+
+            return NowSpeed < limitMaxSpeed &&  (SpeedToAverage * 3) > NowSpeed && AccuracyWithFilter(plc_input,index) && TooClosePoint(plc_input,plc_correct,index);
+        }
+        else
+            return NowSpeed < limitMaxSpeed && AccuracyWithFilter(plc_input,index) && TooClosePoint(plc_input,plc_correct,index);
+
     }
 
     private double getSpeed(PointListCustom plc_input, PointListCustom plc_correct ,int fromNode, int toNode){
@@ -62,12 +68,60 @@ public class GPXFilter {
         return Speed;
     }
 
+    private double getSpeed(PointListCustom plc_input, int index){
+        double Speed,fromLat,fromLon,toLat,toLon;
+        double distance;
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        try {
+            fromPointTime = simpleDateFormat.parse(plc_input.getTime(index)).getTime();
+            toPointTime = simpleDateFormat.parse(plc_input.getTime(index+1)).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        fromLat = plc_input.getLat(index);
+        fromLon = plc_input.getLon(index);
+        toLat = plc_input.getLat(index+1);
+        toLon = plc_input.getLon(index+1);
+
+        distance = distanceCalcEarth.calcDist(fromLat,fromLon,toLat,toLon);
+
+        Speed = distance / (Math.abs(Double.valueOf(fromPointTime-toPointTime))/1000)*3.6;
+
+        return Speed;
+    }
+
+    /**calc Speed Average**/
+    private double SpeedAverage(PointListCustom plc_input, int index){
+
+        double[] Speed = new double[20];
+        double sum = 0, SpeedAver = 0;
+        int conut = 0;
+
+        for(int s = index > DynamicWindowSize ? index - DynamicWindowSize : 0; index + DynamicWindowSize < plc_input.size() -1 ? s < index + DynamicWindowSize : s < plc_input.size()-1; s++){
+            Speed[conut] = getSpeed(plc_input,s);
+            conut++;
+        }
+
+        for(int j = 0 ; j < DynamicWindowSize ; j++){
+            sum += Speed[j];
+        }
+
+        SpeedAver = sum / (DynamicWindowSize - 1);
+
+        System.out.println("Speed Average: " + SpeedAver);
+
+        return SpeedAver;
+
+    }
+
     private boolean AccuracyWithFilter(PointListCustom plc_input,int index){
         // DCI = Down Confidence Interval , UCI = UP confidence Interval
         double SumAccuracy = 0, StandardDeviationAccuracy = 0, averageAccuracy = 0, variacne2 = 0, DCIAccuracy = 0, UCIAccuracy = 0;
-        int WindowSize = 16;
 
-        if(plc_input.size <=16){
+        if(plc_input.size <= DynamicWindowSize){
             System.out.println("current point Accuracy:" + plc_input.getAccuracy(index));
             System.out.println(" ");
             return plc_input.getAccuracy(index) <= 99f;
@@ -77,23 +131,23 @@ public class GPXFilter {
             if(plc_input.getAccuracy(index) > 200)
                 return false;
 
-            for(int i = index >15 ? index - 15 : 0; index + 15 < plc_input.size() -1 ? i < index +15 : i < plc_input.size(); i++){
+            for(int i = index > DynamicWindowSize ? index - DynamicWindowSize : 0; index + DynamicWindowSize < plc_input.size() -1 ? i < index + DynamicWindowSize : i < plc_input.size(); i++){
                 SumAccuracy += plc_input.getAccuracy(i);
             }
 
             //calc Average
-            averageAccuracy = SumAccuracy / WindowSize;
+            averageAccuracy = SumAccuracy / DynamicWindowSize;
 
             //calc Standard Deviation
-            for(int n =  index >15 ? index - 15 : 0; index + 15 < plc_input.size() -1 ? n < index +15 : n < plc_input.size(); n++){
+            for(int n =  index > DynamicWindowSize ? index - DynamicWindowSize : 0; index + DynamicWindowSize < plc_input.size() -1 ? n < index + DynamicWindowSize : n < plc_input.size(); n++){
                 variacne2 += Math.pow(plc_input.getAccuracy(n) - averageAccuracy,2);
             }
 
-            StandardDeviationAccuracy = Math.sqrt(variacne2/WindowSize);
+            StandardDeviationAccuracy = Math.sqrt(variacne2/DynamicWindowSize);
 
             //calc 95% Confidence interval CI = average +- 1.96 * (σ / √n), calc 99% CI =  average +- 2.58 * (σ / √n)
-            DCIAccuracy = averageAccuracy - 1.96 *(StandardDeviationAccuracy / 4);
-            UCIAccuracy = averageAccuracy + 1.96 *(StandardDeviationAccuracy / 4);
+            DCIAccuracy = averageAccuracy - 1.96 *(StandardDeviationAccuracy / Math.sqrt(DynamicWindowSize));
+            UCIAccuracy = averageAccuracy + 1.96 *(StandardDeviationAccuracy / Math.sqrt(DynamicWindowSize));
 
             System.out.println("Sd:" + StandardDeviationAccuracy + " Average:"+averageAccuracy);
             System.out.println("current point Accuracy:" + plc_input.getAccuracy(index));
@@ -132,20 +186,20 @@ public class GPXFilter {
 
         StandardDeviationAccuracy = Math.sqrt(variacne2/InitPLC.size());
 
-        DCIAccuracy = averageAccuracy - 2.58 *(StandardDeviationAccuracy / 4);
-        UCIAccuracy = averageAccuracy + 2.58 *(StandardDeviationAccuracy / 4);
+        DCIAccuracy = averageAccuracy - 2.58 *(StandardDeviationAccuracy / Math.sqrt(24));
+        UCIAccuracy = averageAccuracy + 2.58 *(StandardDeviationAccuracy / Math.sqrt(24));
 
         System.out.println("DCI :" + DCIAccuracy +"~ UCI : " + UCIAccuracy);
 
         for(int z=0; z < InitPLC.size()-1; z++){
             MoveDistance = distanceCalcEarth.calcDist(InitPLC.getLat(z),InitPLC.getLon(z),InitPLC.getLat(z+1),InitPLC.getLon(z+1)) ;
 
-            if(InitPLC.getAccuracy(z) > DCIAccuracy && InitPLC.getAccuracy(z) < UCIAccuracy && MoveDistance > 0)
+            if(InitPLC.getAccuracy(z) < UCIAccuracy && MoveDistance > 3)
                 RobustnessPointList.add(InitPLC.getLat(z),InitPLC.getLon(z),InitPLC.getEle(z),InitPLC.getAccuracy(z),InitPLC.getTime(z));
-            System.out.println("this list index:" +z +" Accuracy :"+InitPLC.getAccuracy(z) + "　Distance:" + MoveDistance);
+            System.out.println("this list index:" +z +" Accuracy :"+InitPLC.getAccuracy(z) + " Distance: " + MoveDistance);
         }
         if(RobustnessPointList.size() < 1)
-            RobustnessPointList.add(InitPLC.getLat(15),InitPLC.getLon(15),InitPLC.getEle(15),InitPLC.getAccuracy(15),InitPLC.getTime(15));
+            RobustnessPointList.add(InitPLC.getLat(23),InitPLC.getLon(23),InitPLC.getEle(23),InitPLC.getAccuracy(23),InitPLC.getTime(23));
 
         System.out.println("Robustness Point List:" + RobustnessPointList);
         return RobustnessPointList;
@@ -158,7 +212,7 @@ public class GPXFilter {
         int PreviousGPXIndex = plc_input.size() - 2;
         // distance from calc current place - previous place
         double distance = distanceCalcEarth.calcDist(plc_input.getLat(PreviousGPXIndex),plc_input.getLon(PreviousGPXIndex),plc_input.getLat(CurrentGPXIndex),plc_input.getLon(CurrentGPXIndex));
-        int stayCheckDistance = 60;
+        double stayCheckDistance = 60;
         int stayCheckTime = 5;
         long PreviousTime =0;
         long CurrentTime=0;

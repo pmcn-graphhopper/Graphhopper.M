@@ -118,7 +118,8 @@ $(document).ready(function (e) {
     $("#selectFile").click(function () {selectFile();});
     $("#exportFile").click(function () {ExportGPXFile();});
     $("#display_stay").click(function () {DisplayStayPoint();});
-    $("#trajectory").click(function () {DisplayRouteTrajectory();});
+    $("#trajectory").click(function () {DisplayGPXTrajectory();});
+    $("#rawTrajectory").click(function(){DisplayFileRawTrajectory();});
 
     var urlParams = urlTools.parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -880,15 +881,34 @@ function drawLine(){
             snapped_waypoints: path_snapped_waypoints
         }
     };
-    //console.log(geojsonFeature);
-    mapLayer.addDataToRoutingLayer(geojsonFeature);
+
+    if(path_point.length >= 2)
+        mapLayer.addDataToRoutingLayer(geojsonFeature);
+}
+
+function drawLine2(){
+
+    var defaultRouteStyle = {color: "#FF8963", "weight": 5, "opacity": 0.6};
+    var geojsonFeature = {
+        "type": "Feature",
+        "geometry": {
+            "type":"LineString",
+            "coordinates":path_point},
+        "properties": {
+            "style": defaultRouteStyle,
+            name: "route",
+            snapped_waypoints: path_snapped_waypoints
+        }
+    };
+
+    if(path_point.length >= 2)
+        mapLayer.addDataToRoutingLayer(geojsonFeature);
 }
 
 /**Clear Line and marker**/
 function ClearLayer() {
     mapLayer.clearLayers();
 }
-
 
 /**navigation gps location to home**/
 function RoutingLocation() {
@@ -901,7 +921,6 @@ module.exports.routing = function(routingFromLat,routingFromLon){
 
     var pathindex = 0;
     var GPXc = new GHCustom();
-
     GPXc.route(routingFromLat,routingFromLon,HomeCoordObject.lat,HomeCoordObject.lng);
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log("this is json");
@@ -929,17 +948,19 @@ module.exports.routing = function(routingFromLat,routingFromLon){
 /**set time to go get the location**/
 function Location(boolean) {
 
-    /**set init 10 sec sampling rate 1 hz**/
+    /**set init 24 sec sampling rate 1 hz**/
     if(boolean === true && initCount === 0)
         window.IntervalLocation = setInterval(getLocation,1000);
 
-    if(boolean === true && initCount >= 16){
+    if(boolean === true && initCount === 25){
         clearInterval(window.IntervalLocation);
         window.IntervalLocation = setInterval(getLocation,5000);
     }
 
-    if(boolean === false)
+    if(boolean === false){
         clearInterval(window.IntervalLocation);
+        initCount = 25;
+    }
 
     console.log(IntervalLocation);
 }
@@ -975,26 +996,39 @@ function showPosition(position) {
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
 
-        var GPX_Point =json.GPX_Point;
-        var GPX_length = GPX_Point.length;
-
-        if(count < GPX_length){
-            for(var i = count; i < GPX_length; i++){
-                latlonArray = GPX_Point[i].split(',');
-                mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
-                path_point.push(latlonArray);
-
+        if(json.GPX_Point){
+            var GPX_Point =json.GPX_Point;
+            var GPX_length = GPX_Point.length;
+            if(count < GPX_length){
+                for(var i = count; i < GPX_length; i++){
+                    latlonArray = GPX_Point[i].split(',');
+                    mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+                    path_point.push(latlonArray);
+                }
+                count = GPX_length;
             }
-            count = GPX_length;
         }
+        /*
+        if(json.BBox){
+            var BBoxBounds = json.BBox;
+            if(BBoxBounds.length > 0){
+                var minLon = BBoxBounds[3];
+                var minLat = BBoxBounds[2];
+                var maxLon = BBoxBounds[1];
+                var maxLat = BBoxBounds[0];
+                var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
+                mapLayer.fitMapToBounds(tmpB);
+            }
+        }*/
     });
 
     drawLine();
+
     console.log(GPXc.GPXurl);
 
-    if(initCount < 17)
+    if(initCount < 26)
         initCount++;
-    if(initCount === 16)
+    if(initCount === 25)
         Location(true);
 
 }
@@ -1027,9 +1061,9 @@ function sleep(sec){
 
 /**Map Matching**/
 function MapMatching(){
+
     var GPXc = new GHCustom();
     GPXc.MapMatching(0,0);
-
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log("this is json");
         console.log(json);
@@ -1040,9 +1074,9 @@ function MapMatching(){
 
 /**query storage gpx file**/
 function displayFile() {
+
     var GPXc = new GHCustom();
     GPXc.GetGPXFile(0,0);
-
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
         var file =json.GPXFile;
@@ -1085,7 +1119,7 @@ function selectFile(){
                 }
                 mapLayer.createMarkerGPX(path_snapped_waypoints[0][1],path_snapped_waypoints[0][0]);
                 mapLayer.createMarkerGPX(path_snapped_waypoints[1][1],path_snapped_waypoints[1][0]);
-                drawLine();
+                drawLine2();
                 path_point = [];
                 path_snapped_waypoints =[];
             });
@@ -1096,12 +1130,44 @@ function selectFile(){
 
 }
 
+/**Display Raw Trajectory**/
+function DisplayFileRawTrajectory() {
+    var GPXc = new GHCustom();
+    var str = null;
+    var latlonArray = [];
+
+    $("#gpxFile").find(":selected").each(function() {
+        if(this.text !== 'null'){
+            var strlength = this.text.length;
+            if(strlength === 13)
+                str = this.text.slice(8,9);
+            else
+                str = this.text.slice(8,10);
+            GPXc.DisplayFileTrajectory(0,0,str);
+
+            GPXc.doRequest(GPXc.GPXurl, function (json) {
+                console.log(json);
+                var GPX_Point = json.GPX_Point;
+                for(var p = 0; p < GPX_Point.length; p++){
+                    latlonArray = GPX_Point[p].split(',');
+                    mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+                    path_point.push(latlonArray);
+                }
+                drawLine2();
+                path_point = [];
+                path_snapped_waypoints =[];
+            });
+        }else{
+            alert("please choose gpx file!")
+        }
+    });
+}
+
 /**easy instruction of Storage Stay Place data**/
 function StorageStayPlace(){
 
     var GPXc = new GHCustom();
     GPXc.StorageStayPlace(0,0);
-
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
     });
@@ -1109,34 +1175,79 @@ function StorageStayPlace(){
 
 /**Export GPX File instruction**/
 function ExportGPXFile(){
+
     var GPXc = new GHCustom();
     GPXc.ExportGPXFile(0,0);
-
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
     });
 }
 
-
+/**Display Stay Point**/
 function DisplayStayPoint(){
-    var GPXc = new GHCustom();
-    GPXc.Display(0,0);
 
     var latlonArray = [];
-
+    var GPXc = new GHCustom();
+    GPXc.DisplayStay(0,0);
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
         var GPX_Point = json.GPX_Point;
-        for(var p = 0; p < GPX_Point.length; p++){
-            latlonArray = GPX_Point[p].split(',');
-            mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+
+        if(GPX_Point.length > 0){
+            for(var p = 0; p < GPX_Point.length; p++){
+                latlonArray = GPX_Point[p].split(',');
+                mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+            }
+        }
+
+        if(json.BBox){
+            var BBoxBounds = json.BBox;
+            if(BBoxBounds.length > 0){
+                var minLon = BBoxBounds[3];
+                var minLat = BBoxBounds[2];
+                var maxLon = BBoxBounds[1];
+                var maxLat = BBoxBounds[0];
+                var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
+                mapLayer.fitMapToBounds(tmpB);
+            }
+        }
+    });
+}
+
+/**Display GPX Trajectory**/
+function DisplayGPXTrajectory(){
+
+    var latlonArray = [];
+    var GPXc = new GHCustom();
+    GPXc.DisplayTrajectory(0,0);
+    GPXc.doRequest(GPXc.GPXurl, function (json) {
+        console.log(json);
+        var GPX_Point = json.GPX_Point;
+
+        if(GPX_Point.length > 0){
+            for(var p = 0; p < GPX_Point.length; p++){
+                latlonArray = GPX_Point[p].split(',');
+                path_point.push(latlonArray);
+                mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+            }
+        }
+
+        drawLine();
+
+        if(json.BBox){
+            var BBoxBounds = json.BBox;
+            if(BBoxBounds.length > 0){
+                var minLon = BBoxBounds[3];
+                var minLat = BBoxBounds[2];
+                var maxLon = BBoxBounds[1];
+                var maxLat = BBoxBounds[0];
+                var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
+                mapLayer.fitMapToBounds(tmpB);
+            }
         }
     });
 
-}
 
-function DisplayRouteTrajectory(){
-    drawLine();
 }
 
 module.exports.setFlag = setFlag;

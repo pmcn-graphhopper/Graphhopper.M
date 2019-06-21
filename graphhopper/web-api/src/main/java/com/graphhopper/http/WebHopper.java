@@ -72,6 +72,16 @@ public class WebHopper {
         return json;
     }
 
+    public static ObjectNode JsonObjectV2(ArrayList<String> pointList, ArrayList<Double> BBoxList){
+
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.putPOJO("GPX_Point",pointList);
+        json.putPOJO("BBox",BBoxList);
+
+        return json;
+    }
+
+
     public static ObjectNode RouteJsonObject(GHResponse ghRsp){
 
         boolean enableElevation = false;

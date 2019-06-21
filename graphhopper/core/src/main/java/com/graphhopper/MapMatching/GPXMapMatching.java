@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -129,7 +130,7 @@ public class GPXMapMatching {
         try {
             dbHelper.DBConnection();
 
-            dbHelper.TrainEdgeWeighting(edge_ID);
+            dbHelper.TrainEdgeWeighting(edge_ID,getTime());
 
             dbHelper.DBClose();
         } catch (SQLException e) {
@@ -137,6 +138,15 @@ public class GPXMapMatching {
         }
 
     }
+
+    private String getTime(){
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date newTime = new Date();
+
+        return simpleDateFormat.format(newTime);
+    }
+
 
     /**consider to return web GPX Point Array**/
     public ArrayList<String> GPXdoImport(int version){
@@ -149,7 +159,6 @@ public class GPXMapMatching {
 
         return MatchingPoint_Array;
     }
-
 
 
 }
