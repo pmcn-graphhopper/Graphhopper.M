@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper version 10" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper version 12" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
 <metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>1970-01-01T00:00:00Z</time></metadata>
 <trk><name>GraphHopper GPX Track</name><trkseg>
 <trkpt lat="22.97571" lon="120.218473"><time>2019-06-25T11:40:25Z</time></trkpt>

@@ -39,7 +39,7 @@ public class GPXTraining {
             e.printStackTrace();
         }
 
-        rt = 5 - (Math.log10((Math.abs(CurrentTime-LastTime)/1000) / 60) / 2);
+        rt = 5 - (Math.log10((Math.abs(CurrentTime-LastTime)/1000) / 3600) / 2);
 
         score = 1  /  (1 + Math.exp(-rt));
 

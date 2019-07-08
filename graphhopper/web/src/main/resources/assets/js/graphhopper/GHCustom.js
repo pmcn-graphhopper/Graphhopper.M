@@ -62,6 +62,9 @@ GHCustom.prototype.DisplayFileTrajectory = function(lat,lon,index){
     this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&rawTrajectory=t&index="+index;
 }
 
+GHCustom.prototype.ExperimentTrajectory = function(lat,lon){
+    this.GPXurl = "https://pmcn-graphhopper.tk/gpx?point=" + lat + "%2C" +lon +"&experiment=t";
+}
 
 GHCustom.prototype.doRequest = function (url ,callback) {
     var that = this;

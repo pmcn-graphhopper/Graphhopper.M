@@ -136,6 +136,12 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean InitFlag = true;
     private int boxIndex = 0;
     private int InitBox = 0;
+    private int FilterCount = 0;
+    private GPXFilter gpxFilter = new GPXFilter();
+
+    /**test parameter**/
+    private PointListCustom testList = new PointListCustom();
+    private int SamePointCount = 0;
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -1305,15 +1311,52 @@ public class GraphHopper implements GraphHopperAPI {
     }
     public boolean CheckStayPointSize(){ return plcStayPlace.size() > 0; }
     public boolean CheckTrajectorySize(){ return correctPointList.size() > 0; }
+    public boolean CheckFilterCount(){return FilterCount >= 36; }
+    private int SumSameCount(){ return SamePointCount + gpxFilter.getSamePointCount(); }
+
+    /**experiment Point Filter Algorithm to value**/
+    public ArrayList<String> ExperimentTrajectory(){
+
+        PointListCustom rawTrajectory = new PointListCustom();
+        int rawSize = testList.size();
+        ArrayList<String> Raw_GPX_Array = new ArrayList<String>();
+
+        System.out.println("raw trajectory point list size: " + testList.size());
+        gpxFilter.SpeedAverage(testList);
+        gpxFilter.AccuracyAverage(testList);
+        gpxFilter.AccuracySD(testList);
+        System.out.println(" ");
+        System.out.println("filter after trajectory point list size: " + correctPointList.size());
+        gpxFilter.SpeedAverage(pointList);
+        gpxFilter.AccuracyAverage(pointList);
+        gpxFilter.AccuracySD(pointList);
+        System.out.println("filter Same Point Count: " + SumSameCount());
+
+        //raw trajectory filter distance = 0
+        for(int h = 0; h < rawSize -2 ; h++){
+            if(distanceCalcEarth.calcDist(testList.getLat(h),testList.getLon(h),testList.getLat(h+1),testList.getLon(h+1)) > 0)
+                rawTrajectory.add(testList.getLat(h),testList.getLon(h),Double.NaN,0,testList.getTime(h));
+        }
+        rawTrajectory.add(testList.getLat(rawSize-1),testList.getLon(rawSize-1),Double.NaN,0,testList.getTime(rawSize-1));
+
+        if(rawTrajectory.size()>0){
+            for(int e=0; e < rawTrajectory.size(); e++){
+                Raw_GPX_Array.add(rawTrajectory.getLon(e)+","+rawTrajectory.getLat(e));
+            }
+            System.out.println("Raw Point List size: " + rawTrajectory.size() + " Raw Point List: " + Raw_GPX_Array);
+            System.out.println(" ");
+        }
+
+        return Raw_GPX_Array;
+    }
 
     /**add GPS Point**/
     public ArrayList<String> GPS_Point_record(GHPoint point,String acc, String time){
 
         ArrayList<String> GPX_Point_Array = new ArrayList<String>();
-        GPXFilter gpxFilter = new GPXFilter();
-        PointListCustom DetectSatyPlace = new PointListCustom();
 
         pointList.add(point,Double.parseDouble(acc),time);
+        testList.add(point,Double.parseDouble(acc),time);
 
         /**Initial phase**/
         if(InitFlag && pointList.size() ==24){
@@ -1339,12 +1382,22 @@ public class GraphHopper implements GraphHopperAPI {
             //filter class
             if(pointList.size() >= 2){
                 int s = pointList.size()-1;
+                int f = correctPointList.size()-1;
 
-                if(distanceCalcEarth.calcDist(pointList.getLat(s-1),pointList.getLon(s-1),pointList.getLat(s),pointList.getLon(s)) == 0)
+                if(distanceCalcEarth.calcDist(pointList.getLat(s-1),pointList.getLon(s-1),pointList.getLat(s),pointList.getLon(s)) == 0){
+                    //if(distanceCalcEarth.calcDist(correctPointList.getLat(f),correctPointList.getLon(f),pointList.getLat(s),pointList.getLon(s)) == 0)
+                    //    correctPointList.setPLC(f,correctPointList.getLat(f),correctPointList.getLon(f),Double.NaN,correctPointList.getAccuracy(f),pointList.getTime(s));
                     pointList.remove(s);
+                    FilterCount++;
+                    SamePointCount++;
+                }
                 else
-                    if(gpxFilter.FilterSpeedWithAcc(pointList, correctPointList, s))
+                    if(gpxFilter.FilterSpeedWithAcc(pointList, correctPointList, s)){
                         correctPointList.add(pointList.getLat(s),pointList.getLon(s),pointList.getEle(s),pointList.getAccuracy(s),pointList.getTime(s));
+                        FilterCount=0;
+                    }
+                    else
+                        FilterCount++;
 
                 // return Filter after GPX Point List
                 if(correctPointList.size() > 0){
@@ -1355,25 +1408,31 @@ public class GraphHopper implements GraphHopperAPI {
                     System.out.println(" ");
                 }
 
-                /**detect stay place poin**/
-                if(correctPointList.size() >= 2){
-                    DetectSatyPlace = gpxFilter.PlaceStayCheck(correctPointList);
-                    // Only get One Stay Place
-                    if(DetectSatyPlace.size() > 0){
-                        plcStayPlace.add(DetectSatyPlace.getLat(0),DetectSatyPlace.getLon(0),Double.NaN,0,DetectSatyPlace.getTime(0));
-
-                        //System.out.println("Add After Stay Place :" + plcStayPlace);
-                        plcStayPlace = gpxFilter.SamePointFiltered(plcStayPlace);
-                        System.out.println("Filter Same Point After Stay Place :" + plcStayPlace);
-                        System.out.println(" ");
-                    }
-
-                }
-
+                calcStayPoint();
             }
         }
 
         return GPX_Point_Array;
+    }
+
+    /**detect stay place point**/
+    private void calcStayPoint(){
+
+        PointListCustom DetectSatyPlace = new PointListCustom();
+
+        if(correctPointList.size() >= 3){
+            DetectSatyPlace = gpxFilter.PlaceStayCheck(correctPointList);
+            // Only get One Stay Place
+            if(DetectSatyPlace.size() > 0){
+                plcStayPlace.add(DetectSatyPlace.getLat(0),DetectSatyPlace.getLon(0),Double.NaN,0,DetectSatyPlace.getTime(0));
+                System.out.println("Detect Stay Place: " + DetectSatyPlace +"Add After Stay Place: " + plcStayPlace + "Stay List Size: " + plcStayPlace.size());
+
+                plcStayPlace = gpxFilter.SamePointFiltered(plcStayPlace);
+                System.out.println("Filter Same Point After Stay Place :" + plcStayPlace);
+                System.out.println(" ");
+            }
+        }
+
     }
 
     public GHResponse calcPath(final double fromLat, final double fromLon,
@@ -1427,7 +1486,7 @@ public class GraphHopper implements GraphHopperAPI {
                 e.printStackTrace();
             }
 
-            plcStayPlace.clear();
+            //plcStayPlace.clear();
         }
     }
 
@@ -1440,12 +1499,16 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public ArrayList<String> DisplayStayPoint(){
-        ArrayList<String>  StayPoint_Array = new ArrayList<String>();
+        ArrayList<String> StayPoint_Array = new ArrayList<String>();
         if(plcStayPlace.size() > 0){
             for(int j=0 ; j < plcStayPlace.size() ; j++){
                 StayPoint_Array.add(plcStayPlace.getLon(j)+","+plcStayPlace.getLat(j));
             }
+            System.out.println("Stay Point: " + StayPoint_Array);
         }
+        else
+            System.out.println("not appear Stay Point");
+
         return StayPoint_Array;
     }
 

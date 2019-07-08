@@ -350,19 +350,19 @@ var iconGPX = L.icon({
     iconAnchor: [12, 40]
 });
 
-var iconHome = L.icon({
+var iconStay = L.icon({
     iconUrl: './img/marker_hole.png',
     shadowSize: [50, 64],
     shadowAnchor: [4, 62],
     iconAnchor: [12, 40]
 });
 
-module.exports.createMarkerGPX = function(GPX_lat,GPX_lng){
+module.exports.createMarkerGPX = function(GPX_lat, GPX_lng){
     L.marker([GPX_lat,GPX_lng],{icon:iconGPX}).addTo(routingLayer);
 };
 
-module.exports.createMarkerHome = function(Home_lat,Home_lng){
-    L.marker([Home_lat,Home_lng],{icon:iconHome}).addTo(routingLayer);
+module.exports.createMarkerStay = function(Stay_lat, Stay_lng){
+    L.marker([Stay_lat,Stay_lng],{icon:iconStay}).addTo(routingLayer);
 };
 
 module.exports.createMarker = function (index, coord, setToEnd, setToStart, deleteCoord, ghRequest) {

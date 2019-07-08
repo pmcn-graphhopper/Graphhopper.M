@@ -53,6 +53,7 @@ public class GPXResource {
             @QueryParam("display") @DefaultValue("f") String display,
             @QueryParam("trajectory") @DefaultValue("f") String trajectory,
             @QueryParam("rawTrajectory") @DefaultValue("f") String rawFileTrajectory,
+            @QueryParam("experiment") @DefaultValue("f") String experiment,
             @QueryParam("routing") @DefaultValue("f") String route){
 
         //route function
@@ -139,6 +140,11 @@ public class GPXResource {
             int GPXIndex = Integer.valueOf(index);
 
             return Response.ok(WebHopper.JsonObject(graphHopper.gpxTrajectory(GPXIndex))).build();
+
+        //experiment point filter algorithm
+        } else if(experiment.equalsIgnoreCase("t")) {
+
+            return Response.ok(WebHopper.JsonObject(graphHopper.ExperimentTrajectory())).build();
         }
         else {
 

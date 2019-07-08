@@ -1,5 +1,6 @@
 package com.graphhopper.GPXUtil;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.util.DistanceCalcEarth;
 
 import java.text.ParseException;
@@ -18,6 +19,7 @@ public class GPXFilter {
     private long fromPointTime =0;
     private long toPointTime =0;
     private int DynamicWindowSize =12;
+    private int SameFilterCount = 0;
 
     public boolean FilterSpeedWithAcc(PointListCustom plc_input,PointListCustom plc_correct,int index){
 
@@ -56,14 +58,14 @@ public class GPXFilter {
         distance = distanceCalcEarth.calcDist(fromLat,fromLon,toLat,toLon);
 
         Speed = distance / (Math.abs(Double.valueOf(fromPointTime-toPointTime))/1000)*3.6;
-
+        /*
         if(Speed > 0){
             System.out.println("index:" +fromNode);
             System.out.println("From: " + fromLat + ',' +fromLon);
             System.out.println("To: " + toLat + ',' +toLon);
             System.out.println("Speed: " + Speed);
             System.out.println("distance:"+ distance);
-        }
+        }*/
 
         return Speed;
     }
@@ -93,7 +95,7 @@ public class GPXFilter {
         return Speed;
     }
 
-    /**calc Speed Average**/
+    /**calc window Speed Average**/
     private double SpeedAverage(PointListCustom plc_input, int index){
 
         double[] Speed = new double[20];
@@ -117,6 +119,51 @@ public class GPXFilter {
 
     }
 
+    /**experiment to calc total Speed Average**/
+    public void SpeedAverage(PointListCustom plc_input){
+
+        double sum = 0, SpeedAver = 0;
+
+        for(int s = 0; s < plc_input.size()-1; s++){
+            sum = sum + getSpeed(plc_input,s);
+        }
+
+        SpeedAver = sum / (plc_input.size()-1);
+
+        System.out.println("Speed Average: " + SpeedAver);
+
+    }
+
+    /**experiment to calc total Accuracy Average**/
+    public double AccuracyAverage(PointListCustom plc_input){
+
+        double sum = 0, AccAver = 0;
+
+        for(int s = 0; s < plc_input.size(); s++){
+            sum = sum + plc_input.getAccuracy(s);
+        }
+
+        AccAver = sum / plc_input.size();
+
+        return AccAver;
+    }
+
+    /**experiment to calc total Accuracy Standard Deviation **/
+    public void AccuracySD(PointListCustom plc_input){
+        double variacne = 0 , StandardDeviationAccuracy = 0 , averageAccuracy = 0;
+
+        averageAccuracy = AccuracyAverage(plc_input);
+
+        for(int a = 0; a < plc_input.size(); a++){
+            variacne += Math.pow(plc_input.getAccuracy(a) - averageAccuracy, 2);
+        }
+
+        StandardDeviationAccuracy = Math.sqrt(variacne / plc_input.size());
+
+        System.out.println("Accuracy Average: " + averageAccuracy);
+        System.out.println("Accuracy Standard Deviation: " + StandardDeviationAccuracy);
+    }
+
     private boolean AccuracyWithFilter(PointListCustom plc_input,int index){
         // DCI = Down Confidence Interval , UCI = UP confidence Interval
         double SumAccuracy = 0, StandardDeviationAccuracy = 0, averageAccuracy = 0, variacne2 = 0, DCIAccuracy = 0, UCIAccuracy = 0;
@@ -128,7 +175,7 @@ public class GPXFilter {
         }
         else {
 
-            if(plc_input.getAccuracy(index) > 200)
+            if(plc_input.getAccuracy(index) > 100)
                 return false;
 
             for(int i = index > DynamicWindowSize ? index - DynamicWindowSize : 0; index + DynamicWindowSize < plc_input.size() -1 ? i < index + DynamicWindowSize : i < plc_input.size(); i++){
@@ -165,14 +212,21 @@ public class GPXFilter {
         double toLat = plc_input.getLat(index);
         double toLon = plc_input.getLon(index);
 
-        return   8 < distanceCalcEarth.calcDist(fromLat,fromLon,toLat,toLon);
+        if(15 < distanceCalcEarth.calcDist(fromLat,fromLon,toLat,toLon))
+            SameFilterCount++;
+
+        return  15 < distanceCalcEarth.calcDist(fromLat,fromLon,toLat,toLon);
     }
+
+    public int getSamePointCount(){ return SameFilterCount; }
 
     /**Initial GPS Point List, Provide Robustness List*/
     public PointListCustom GpsInitWindows(PointListCustom InitPLC){
         // DCI = Down Confidence Interval , UCI = UP Confidence Interval
         double SumAccuracy = 0, StandardDeviationAccuracy = 0, averageAccuracy = 0, variacne2 = 0, DCIAccuracy = 0, UCIAccuracy = 0;
         double MoveDistance = 0;
+        double AccCompares = 200;
+        int index = 0;
         PointListCustom RobustnessPointList = new PointListCustom();
 
         for(int k =0; k < InitPLC.size(); k++){
@@ -194,12 +248,21 @@ public class GPXFilter {
         for(int z=0; z < InitPLC.size()-1; z++){
             MoveDistance = distanceCalcEarth.calcDist(InitPLC.getLat(z),InitPLC.getLon(z),InitPLC.getLat(z+1),InitPLC.getLon(z+1)) ;
 
-            if(InitPLC.getAccuracy(z) < UCIAccuracy && MoveDistance > 3)
+            if(InitPLC.getAccuracy(z) < UCIAccuracy && MoveDistance > 1)
                 RobustnessPointList.add(InitPLC.getLat(z),InitPLC.getLon(z),InitPLC.getEle(z),InitPLC.getAccuracy(z),InitPLC.getTime(z));
             System.out.println("this list index:" +z +" Accuracy :"+InitPLC.getAccuracy(z) + " Distance: " + MoveDistance);
         }
-        if(RobustnessPointList.size() < 1)
-            RobustnessPointList.add(InitPLC.getLat(23),InitPLC.getLon(23),InitPLC.getEle(23),InitPLC.getAccuracy(23),InitPLC.getTime(23));
+
+        if(RobustnessPointList.size() < 1){
+            for(int i=0; i < InitPLC.size(); i++){
+                if(InitPLC.getAccuracy(i) < AccCompares)
+                {
+                    AccCompares = InitPLC.getAccuracy(i);
+                    index = i;
+                }
+            }
+            RobustnessPointList.add(InitPLC.getLat(index),InitPLC.getLon(index),InitPLC.getEle(index),InitPLC.getAccuracy(index),InitPLC.getTime(index));
+        }
 
         System.out.println("Robustness Point List:" + RobustnessPointList);
         return RobustnessPointList;
@@ -212,15 +275,13 @@ public class GPXFilter {
         int PreviousGPXIndex = plc_input.size() - 2;
         // distance from calc current place - previous place
         double distance = distanceCalcEarth.calcDist(plc_input.getLat(PreviousGPXIndex),plc_input.getLon(PreviousGPXIndex),plc_input.getLat(CurrentGPXIndex),plc_input.getLon(CurrentGPXIndex));
-        double stayCheckDistance = 60;
-        int stayCheckTime = 5;
-        long PreviousTime =0;
-        long CurrentTime=0;
+        double stayCheckDistance = 50;
+        int stayCheckTime = 2;
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         PointListCustom plcStayPlace = new PointListCustom();
 
-        //if distance < 60m
+        //if distance < 40m
         if(distance < stayCheckDistance){
             //check to stay place when to start
             for(int TrackPrev = PreviousGPXIndex -1 ; TrackPrev > 0 ; TrackPrev--){
@@ -230,6 +291,8 @@ public class GPXFilter {
 
                 // if true, the Previous Node maybe Stay Place
                 if(checkStartStay > stayCheckDistance){
+                    long PreviousTime =0;
+                    long CurrentTime=0;
                     // time check , set time as 10 min
                     try {
                         PreviousTime = simpleDateFormat.parse(plc_input.getTime(TrackPrev+1)).getTime();
@@ -237,13 +300,14 @@ public class GPXFilter {
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
+                    System.out.println("distance:" + checkStartStay +" PreviousTime: " + PreviousTime +" CurrentTime: " + CurrentGPXIndex);
                     //getTime() return 1970-01-01 00:00:00 to current ms ,so 1min = 1 * 60 *1000
-                    if(Math.abs(CurrentTime-PreviousTime) >= stayCheckTime * 60 *1000){
-                        plcStayPlace.add(plc_input.getLat(TrackPrev+1),plc_input.getLon(TrackPrev+1),Double.NaN,0,plc_input.getTime(TrackPrev+1));
-                        TrackPrev = 0;
-                        System.out.println("add Stay Node: " + plcStayPlace);
+                    if(Math.abs(CurrentTime-PreviousTime) > stayCheckTime * 60 *1000 && PreviousTime != 0 && CurrentTime != 0){
+                        plcStayPlace.add(plc_input.getLat(CurrentGPXIndex),plc_input.getLon(CurrentGPXIndex),Double.NaN,0,plc_input.getTime(CurrentGPXIndex));
+                        System.out.println("add Stay Node: " + plcStayPlace + "Stay Time:" + String.valueOf(Math.abs(CurrentTime-PreviousTime)/60000));
                         System.out.println(" ");
                     }
+                    break;
                 }
             }
         }
@@ -254,7 +318,7 @@ public class GPXFilter {
     /**filter stay place same point**/
     public PointListCustom SamePointFiltered(PointListCustom plc_stay){
 
-        int FilterSameDistance = 60;
+        int FilterSameDistance = 80;
         int plc_stay_size = plc_stay.size();
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -272,8 +336,7 @@ public class GPXFilter {
                 }
                 // 2019/05/29 Test modify successful
                 if(startTime < nextTime)
-                    plc_stay.setPLC(plc_start,plc_stay.getLat(plc_start),plc_stay.getLon(plc_start),
-                            Double.NaN,0,plc_stay.getTime(plc_start+1));
+                    plc_stay.setPLC(plc_start,plc_stay.getLat(plc_start),plc_stay.getLon(plc_start), Double.NaN,0,plc_stay.getTime(plc_start+1));
 
                 plc_stay.remove(plc_start+1);
                 plc_stay_size = plc_stay.size();

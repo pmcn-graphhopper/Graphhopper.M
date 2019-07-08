@@ -117,9 +117,10 @@ $(document).ready(function (e) {
     $("#queryFile").click(function () {displayFile();});
     $("#selectFile").click(function () {selectFile();});
     $("#exportFile").click(function () {ExportGPXFile();});
-    $("#display_stay").click(function () {DisplayStayPoint();});
+    $("#display_stay").click(function () {onlyDisplayTrajectoryLine(); DisplayStayPoint();});
     $("#trajectory").click(function () {DisplayGPXTrajectory();});
     $("#rawTrajectory").click(function(){DisplayFileRawTrajectory();});
+    $("#expTrajectory").click(function () {ExperimentTrajectory();});
 
     var urlParams = urlTools.parseUrlWithHisto();
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
@@ -886,6 +887,25 @@ function drawLine(){
         mapLayer.addDataToRoutingLayer(geojsonFeature);
 }
 
+function drawLine3(){
+
+    var defaultRouteStyle = {color: "#463CFF", "weight": 5, "opacity": 0.6};
+    var geojsonFeature = {
+        "type": "Feature",
+        "geometry": {
+            "type":"LineString",
+            "coordinates":path_point},
+        "properties": {
+            "style": defaultRouteStyle,
+            name: "route",
+            snapped_waypoints: path_snapped_waypoints
+        }
+    };
+
+    if(path_point.length >= 2)
+        mapLayer.addDataToRoutingLayer(geojsonFeature);
+}
+
 function drawLine2(){
 
     var defaultRouteStyle = {color: "#FF8963", "weight": 5, "opacity": 0.6};
@@ -904,6 +924,7 @@ function drawLine2(){
     if(path_point.length >= 2)
         mapLayer.addDataToRoutingLayer(geojsonFeature);
 }
+
 
 /**Clear Line and marker**/
 function ClearLayer() {
@@ -1119,7 +1140,7 @@ function selectFile(){
                 }
                 mapLayer.createMarkerGPX(path_snapped_waypoints[0][1],path_snapped_waypoints[0][0]);
                 mapLayer.createMarkerGPX(path_snapped_waypoints[1][1],path_snapped_waypoints[1][0]);
-                drawLine2();
+                drawLine3();
                 path_point = [];
                 path_snapped_waypoints =[];
             });
@@ -1192,26 +1213,33 @@ function DisplayStayPoint(){
     GPXc.doRequest(GPXc.GPXurl, function (json) {
         console.log(json);
         var GPX_Point = json.GPX_Point;
+        var Stay_length = GPX_Point.length;
 
-        if(GPX_Point.length > 0){
-            for(var p = 0; p < GPX_Point.length; p++){
+        if(Stay_length != null){
+            for(var p = 0; p < Stay_length; p++){
                 latlonArray = GPX_Point[p].split(',');
-                mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+                mapLayer.createMarkerStay(latlonArray[1], latlonArray[0]);
             }
-        }
 
-        if(json.BBox){
-            var BBoxBounds = json.BBox;
-            if(BBoxBounds.length > 0){
-                var minLon = BBoxBounds[3];
-                var minLat = BBoxBounds[2];
-                var maxLon = BBoxBounds[1];
-                var maxLat = BBoxBounds[0];
-                var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
-                mapLayer.fitMapToBounds(tmpB);
+            if(json.BBox){
+                var BBoxBounds = json.BBox;
+                if(BBoxBounds.length > 0){
+                    var minLon = BBoxBounds[3];
+                    var minLat = BBoxBounds[2];
+                    var maxLon = BBoxBounds[1];
+                    var maxLat = BBoxBounds[0];
+                    var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
+                    mapLayer.fitMapToBounds(tmpB);
+                }
             }
         }
     });
+    console.log(GPXc.GPXurl);
+}
+
+function onlyDisplayTrajectoryLine() {
+    mapLayer.clearLayers();
+    drawLine();
 }
 
 /**Display GPX Trajectory**/
@@ -1247,7 +1275,29 @@ function DisplayGPXTrajectory(){
         }
     });
 
+}
 
+/**Experiment 1**/
+function ExperimentTrajectory(){
+
+    var latlonArray = [];
+    var GPXc = new GHCustom();
+    GPXc.ExperimentTrajectory(0,0);
+    GPXc.doRequest(GPXc.GPXurl, function (json) {
+        console.log(json);
+
+        var GPX_Point = json.GPX_Point;
+
+        if(GPX_Point.length > 0){
+            for(var p = 0; p < GPX_Point.length; p++){
+                latlonArray = GPX_Point[p].split(',');
+                path_point.push(latlonArray);
+                mapLayer.createMarkerGPX(latlonArray[1], latlonArray[0]);
+            }
+        }
+
+        drawLine2();
+    });
 }
 
 module.exports.setFlag = setFlag;
