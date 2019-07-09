@@ -1007,7 +1007,8 @@ function showPosition(position) {
 	var time = timestamp.getFullYear()+"-"+ (timestamp.getMonth()+1)+"-"+timestamp.getDate()+" "
               +timestamp.getHours()+":"+timestamp.getMinutes()+":"+timestamp.getSeconds();
 
-    x.innerHTML = "Latitude:" + position.coords.latitude +
+    x.innerHTML ="gps:"+
+        "<br>Latitude:" + position.coords.latitude +
         "<br>Longitude: " + position.coords.longitude +
         "<br>Accuracy: "+ position.coords.accuracy +
         "<br>Time:" + time ;

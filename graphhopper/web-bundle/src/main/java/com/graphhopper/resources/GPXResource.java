@@ -15,6 +15,7 @@ import javax.inject.Named;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 

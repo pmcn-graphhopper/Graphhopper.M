@@ -51,7 +51,7 @@ public class DBHelper {
             preparedStatement = connection.prepareStatement("INSERT INTO gpx VALUES(?,?,?,?,?)");
 
             preparedStatement.setInt(1,edgeId);
-            preparedStatement.setDouble(2,0);
+            preparedStatement.setDouble(2,0.05);
             preparedStatement.setInt(3,1);
             preparedStatement.setInt(4,1);
             preparedStatement.setString(5,time);
@@ -84,6 +84,44 @@ public class DBHelper {
         return times;
     }
 
+    /**get DB all Edge ID**/
+    public ArrayList<Integer> getEdge(ArrayList<Integer> Training_Edge_ID){
+        int id = 0, TrainingID = 0, ALL_ID = 0;
+        boolean exist = false;
+        ArrayList<Integer> ALL_Edge_ID = new ArrayList<>();
+        ArrayList<Integer> Not_Use_Edge = new ArrayList<>();
+
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM gpx");
+
+            while (resultSet.next()){
+                id = resultSet.getInt("edge");
+                ALL_Edge_ID.add(id);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0  ; i < ALL_Edge_ID.size() ; i++){
+            ALL_ID = ALL_Edge_ID.get(i);
+            for(int j = 0 ; j < Training_Edge_ID.size() ; j++){
+                TrainingID = Training_Edge_ID.get(j);
+                if (ALL_ID == TrainingID)
+                    exist = true;
+            }
+
+            if (!exist){
+                Not_Use_Edge.add(ALL_ID);
+            }
+            exist = false;
+        }
+        System.out.println("Not Training Edge List: "+Not_Use_Edge);
+        System.out.println(" ");
+
+        return Not_Use_Edge;
+    }
+
 
     /**Read data example**/
     public void DBRead(){
@@ -109,29 +147,47 @@ public class DBHelper {
         int Times = getTrainingTimes();
         String Record;
 
-        for(int id =0; id < EdgeID.size(); id++){
-            try {
-                ResultSet resultSet = statement.executeQuery("SELECT * FROM gpx WHERE edge =" + EdgeID.get(id));
+        ArrayList<Integer> ReadyWeakeningEdge = new ArrayList<>();
 
-                while(resultSet.next()){
+        for (Integer integer : EdgeID) {
+            try {
+                ResultSet resultSet = statement.executeQuery("SELECT * FROM gpx WHERE edge =" + integer);
+                while (resultSet.next()) {
+                    System.out.println("Edge: " + integer);
                     EdgeWeighting = resultSet.getDouble("weighting");
                     Record = resultSet.getString("ReTime");
-                    EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting,Times,resultSet.getInt("LastTrain"),Record);
-                    DBUpdate(resultSet.getInt("edge"),EdgeWeighting,Times+1,resultSet.getInt("LastTrain")+1,nowTime);
+                    EdgeWeighting = gpxTraining.TrainWeighting(EdgeWeighting, Record);
+                    DBUpdate(resultSet.getInt("edge"), EdgeWeighting, Times + 1, Times + 1, nowTime);
                     DataExist = true;
                 }
 
-                if(!DataExist){
-                    //System.out.println("NOT Value Edge: " + EdgeID.get(id));
-                    DBWrite(EdgeID.get(id),nowTime);
+                if (!DataExist) {
+                    DBWrite(integer, nowTime);
                 }
-
                 DataExist = false;
 
             } catch (SQLException e) {
                 e.printStackTrace();
             }
 
+        }
+
+        ReadyWeakeningEdge = getEdge(EdgeID);
+
+        for(Integer edge : ReadyWeakeningEdge){
+            try {
+                ResultSet resultSet = statement.executeQuery("SELECT * FROM gpx WHERE edge =" + edge);
+                while (resultSet.next()) {
+                    System.out.println("Edge: " + edge);
+                    EdgeWeighting = resultSet.getDouble("weighting");
+                    Record = resultSet.getString("ReTime");
+                    EdgeWeighting = gpxTraining.WeakeningWeighting(EdgeWeighting, Record);
+                    DBUpdate(resultSet.getInt("edge"), EdgeWeighting, Times + 1,resultSet.getInt("LastTrain"), resultSet.getString("ReTime"));
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -255,7 +311,6 @@ public class DBHelper {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return Frequency;
 
     }

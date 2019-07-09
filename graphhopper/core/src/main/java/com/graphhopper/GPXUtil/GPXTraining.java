@@ -13,19 +13,25 @@ import java.util.Date;
 
 public class GPXTraining {
 
-    public double TrainWeighting(double CurrentWeighting, int CurrentTrainTime, int lastTrainTime, String PerTime){
+    /**if training , use edge**/
+    public double TrainWeighting(double CurrentWeighting, String PerTime){
         double EdgeWeighting = 0;
 
-        //if(CurrentTrainTime -lastTrainTime == 0)
         EdgeWeighting = (1 - AbnormalSigmoid(PerTime))  +  AbnormalSigmoid(PerTime) * CurrentWeighting;
-        //else
-        //    EdgeWeighting = AbnormalSigmoid(PerTime) * CurrentWeighting ;
 
         return EdgeWeighting;
     }
+    /**training , not use**/
+    public double WeakeningWeighting(double CurrentWeighting, String PerTime){
+        double edgeWeighting = 0;
 
+        edgeWeighting = AbnormalSigmoid(PerTime) * CurrentWeighting;
+
+        return  edgeWeighting;
+    }
+    /**time recovery function**/
     private double AbnormalSigmoid(String PerTime){
-        double score = 0 , rt = 0;
+        double Riscore = 0 , Ti = 0;
         long CurrentTime =0, LastTime=0;
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -39,12 +45,12 @@ public class GPXTraining {
             e.printStackTrace();
         }
 
-        rt = 5 - (Math.log10((Math.abs(CurrentTime-LastTime)/1000) / 3600) / 2);
+        Ti = 5 - (Math.log10((Math.abs(CurrentTime-LastTime)/1000) / 3600) / 1.5);
 
-        score = 1  /  (1 + Math.exp(-rt));
+        Riscore = 1  /  (1 + Math.exp(-Ti));
 
-        System.out.println("rt : " + rt + "score:" + score);
+        System.out.println("Ti time recovery function: " + Ti + "time score: " + Riscore);
 
-        return  score;
+        return  Riscore;
     }
 }
